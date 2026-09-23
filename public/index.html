@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>水库调度与汛限水位管理台</title>
+<link rel="icon" href="data:," />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <h1>水库调度与汛限水位管理台</h1>
+    <span class="today">今日 <strong id="todayLabel">--</strong></span>
+  </div>
+  <div class="topbar-actions">
+    <span class="hint" id="connHint">正在连接服务…</span>
+    <span class="pill" id="seasonPill">汛期 --</span>
+    <button type="button" class="btn btn-primary" id="openSettings">设置</button>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs" aria-label="主导航">
+  <button type="button" class="tab is-active" data-view="overview">概览</button>
+  <button type="button" class="tab" data-view="reservoirs">水库</button>
+  <button type="button" class="tab" data-view="water">水位与流量</button>
+  <button type="button" class="tab" data-view="orders">调度指令</button>
+  <button type="button" class="tab" data-view="balance">水量平衡</button>
+</nav>
+
+<div class="notice" id="notice" hidden>
+  <span class="notice-text" id="noticeText"></span>
+  <button type="button" class="btn btn-ghost btn-sm" id="noticeClose">知道了</button>
+</div>
+
+<main class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <section class="main">
+
+    <section class="view is-active" data-view="overview">
+      <div class="view-head">
+        <div>
+          <h2>概览</h2>
+          <p class="view-sub">指标卡与现状表的每个数字都直接取自接口 <code>GET /api/summary</code> 返回的字段，前端不做二次判定。点指标卡跳到对应标签并带上筛选，点现状表某一行跳到「水库」标签并展开这一座。</p>
+        </div>
+        <div class="view-actions">
+          <button type="button" class="btn btn-ghost" data-action="reload" data-view="overview">刷新</button>
+        </div>
+      </div>
+
+      <div class="cards" id="overviewCards"></div>
+
+      <div class="card">
+        <h3>各水库现状 <span class="card-sub">接口 <code>summary.reservoirs</code></span></h3>
+        <div class="table-wrap">
+          <table class="table" id="overviewTable">
+            <thead>
+              <tr>
+                <th>编号</th>
+                <th>名称</th>
+                <th>状态</th>
+                <th>最新水位日期</th>
+                <th class="num">水位</th>
+                <th class="num">限水位</th>
+                <th class="num">超出</th>
+                <th class="num">入库流量</th>
+                <th>预警等级</th>
+                <th>是否超限</th>
+              </tr>
+            </thead>
+            <tbody id="overviewRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-view="reservoirs">
+      <div class="view-head">
+        <div>
+          <h2>水库</h2>
+          <p class="view-sub">口径字段与「当前限水位」都是 <code>GET /api/reservoirs</code> 的派生值；点一行在行内展开水位口径、水位-库容曲线点表（可编辑后保存）、曲线查询与记录条数。</p>
+        </div>
+        <div class="view-actions">
+          <span class="pill" id="reservoirCount">共 0 座</span>
+          <button type="button" class="btn btn-ghost" data-action="reload" data-view="reservoirs">刷新</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table" id="reservoirTable">
+          <thead>
+            <tr>
+              <th>编号</th>
+              <th>名称</th>
+              <th>流域</th>
+              <th>状态</th>
+              <th class="num">正常蓄水位</th>
+              <th class="num">汛限水位</th>
+              <th class="num">死水位</th>
+              <th class="num">警戒水位</th>
+              <th class="num">曲线点数</th>
+              <th>曲线复核日期</th>
+              <th class="num">最新水位</th>
+              <th class="num">限水位</th>
+            </tr>
+          </thead>
+          <tbody id="reservoirRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="view" data-view="water">
+      <div class="view-head">
+        <div>
+          <h2>水位与流量</h2>
+          <p class="view-sub">限水位、超出、是否汛期、是否超限、当天入库、预警等级、对应水量都直接显示 <code>GET /api/levels</code> 与 <code>GET /api/flows</code> 返回的字段。点一行在行内展开并删除。</p>
+        </div>
+        <div class="view-actions">
+          <div class="subtabs" id="waterSubtabs">
+            <button type="button" class="subtab is-active" data-action="switch-water" data-kind="level">水位记录</button>
+            <button type="button" class="subtab" data-action="switch-water" data-kind="inflow">入库流量</button>
+            <button type="button" class="subtab" data-action="switch-water" data-kind="release">出库流量</button>
+          </div>
+          <button type="button" class="btn btn-ghost" data-action="reload" data-view="water">刷新</button>
+        </div>
+      </div>
+
+      <section class="panel" id="levelPanel" data-kind="level">
+        <div class="card">
+          <h3>新增水位记录 <span class="card-sub">接口 <code>POST /api/levels</code></span></h3>
+          <form class="form-grid" id="levelForm" novalidate>
+            <label class="field">
+              <span>水库</span>
+              <select name="reservoirId" id="levelFormReservoir"></select>
+              <em class="field-msg" data-field-error="reservoirId" hidden></em>
+            </label>
+            <label class="field">
+              <span>日期</span>
+              <input type="date" name="date" id="levelFormDate" />
+              <em class="field-msg" data-field-error="date" hidden></em>
+            </label>
+            <label class="field">
+              <span>时刻</span>
+              <input type="text" name="time" value="08:00" placeholder="08:00" />
+              <em class="field-msg" data-field-error="time" hidden></em>
+            </label>
+            <label class="field">
+              <span>水位（m）</span>
+              <input type="number" step="0.01" name="level" placeholder="96.50" />
+              <em class="field-msg" data-field-error="level" hidden></em>
+            </label>
+            <label class="field">
+              <span>来源</span>
+              <input type="text" name="source" value="实测" />
+              <em class="field-msg" data-field-error="source" hidden></em>
+            </label>
+            <label class="field">
+              <span>记录人</span>
+              <input type="text" name="recorder" placeholder="值班员" />
+              <em class="field-msg" data-field-error="recorder" hidden></em>
+            </label>
+            <label class="field field-wide">
+              <span>备注</span>
+              <input type="text" name="remark" placeholder="可不填" />
+              <em class="field-msg" data-field-error="remark" hidden></em>
+            </label>
+            <div class="field-actions">
+              <button type="submit" class="btn btn-primary">新增水位</button>
+            </div>
+          </form>
+          <div class="form-error" id="levelFormError" hidden></div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="table" id="levelTable">
+            <thead>
+              <tr>
+                <th>日期</th>
+                <th>时刻</th>
+                <th>水库</th>
+                <th class="num">水位</th>
+                <th class="num">限水位</th>
+                <th class="num">超出</th>
+                <th>是否汛期</th>
+                <th>是否超限</th>
+                <th class="num">当天入库</th>
+                <th>预警等级</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="levelRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="inflowPanel" data-kind="inflow" hidden>
+        <div class="card">
+          <h3>新增入库流量 <span class="card-sub">接口 <code>POST /api/flows</code>（kind=inflow）</span></h3>
+          <form class="form-grid" id="inflowForm" novalidate>
+            <label class="field">
+              <span>水库</span>
+              <select name="reservoirId" id="inflowFormReservoir"></select>
+              <em class="field-msg" data-field-error="reservoirId" hidden></em>
+            </label>
+            <label class="field">
+              <span>日期</span>
+              <input type="date" name="date" id="inflowFormDate" />
+              <em class="field-msg" data-field-error="date" hidden></em>
+            </label>
+            <label class="field">
+              <span>流量（m³/s）</span>
+              <input type="number" step="0.01" name="flow" placeholder="60" />
+              <em class="field-msg" data-field-error="flow" hidden></em>
+            </label>
+            <label class="field">
+              <span>类型</span>
+              <input type="text" name="type" value="实测" />
+              <em class="field-msg" data-field-error="type" hidden></em>
+            </label>
+            <label class="field">
+              <span>记录人</span>
+              <input type="text" name="operator" placeholder="值班员" />
+              <em class="field-msg" data-field-error="operator" hidden></em>
+            </label>
+            <label class="field field-wide">
+              <span>备注</span>
+              <input type="text" name="remark" placeholder="可不填" />
+              <em class="field-msg" data-field-error="remark" hidden></em>
+            </label>
+            <div class="field-actions">
+              <button type="submit" class="btn btn-primary">新增入库流量</button>
+            </div>
+          </form>
+          <div class="form-error" id="inflowFormError" hidden></div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="table" id="inflowTable">
+            <thead>
+              <tr>
+                <th>日期</th>
+                <th>水库</th>
+                <th class="num">流量</th>
+                <th>类型</th>
+                <th class="num">对应水量（万m³）</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="inflowRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="releasePanel" data-kind="release" hidden>
+        <div class="card">
+          <h3>新增出库流量 <span class="card-sub">接口 <code>POST /api/flows</code>（kind=release）</span></h3>
+          <form class="form-grid" id="releaseForm" novalidate>
+            <label class="field">
+              <span>水库</span>
+              <select name="reservoirId" id="releaseFormReservoir"></select>
+              <em class="field-msg" data-field-error="reservoirId" hidden></em>
+            </label>
+            <label class="field">
+              <span>日期</span>
+              <input type="date" name="date" id="releaseFormDate" />
+              <em class="field-msg" data-field-error="date" hidden></em>
+            </label>
+            <label class="field">
+              <span>流量（m³/s）</span>
+              <input type="number" step="0.01" name="flow" placeholder="52" />
+              <em class="field-msg" data-field-error="flow" hidden></em>
+            </label>
+            <label class="field">
+              <span>类型</span>
+              <input type="text" name="type" value="发电" />
+              <em class="field-msg" data-field-error="type" hidden></em>
+            </label>
+            <label class="field">
+              <span>记录人</span>
+              <input type="text" name="operator" placeholder="值班员" />
+              <em class="field-msg" data-field-error="operator" hidden></em>
+            </label>
+            <label class="field field-wide">
+              <span>备注</span>
+              <input type="text" name="remark" placeholder="可不填" />
+              <em class="field-msg" data-field-error="remark" hidden></em>
+            </label>
+            <div class="field-actions">
+              <button type="submit" class="btn btn-primary">新增出库流量</button>
+            </div>
+          </form>
+          <div class="form-error" id="releaseFormError" hidden></div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="table" id="releaseTable">
+            <thead>
+              <tr>
+                <th>日期</th>
+                <th>水库</th>
+                <th class="num">流量</th>
+                <th>类型</th>
+                <th class="num">对应水量（万m³）</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="releaseRows"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <section class="view" data-view="orders">
+      <div class="view-head">
+        <div>
+          <h2>调度指令</h2>
+          <p class="view-sub">实际均值、偏差、附件数都是接口派生字段，前端原样显示。点一行在行内展开理由、下达人、备注、附件清单与改状态、复制、删除。</p>
+        </div>
+        <div class="view-actions">
+          <span class="pill" id="orderCount">共 0 条</span>
+          <button type="button" class="btn btn-ghost" data-action="reload" data-view="orders">刷新</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>新增指令 <span class="card-sub">接口 <code>POST /api/orders</code></span></h3>
+        <form class="form-grid" id="orderForm" novalidate>
+          <label class="field">
+            <span>水库</span>
+            <select name="reservoirId" id="orderFormReservoir"></select>
+            <em class="field-msg" data-field-error="reservoirId" hidden></em>
+          </label>
+          <label class="field">
+            <span>下达日期</span>
+            <input type="date" name="issuedAt" />
+            <em class="field-msg" data-field-error="issuedAt" hidden></em>
+          </label>
+          <label class="field">
+            <span>目标下泄流量（m³/s）</span>
+            <input type="number" step="0.01" name="targetFlow" placeholder="60" />
+            <em class="field-msg" data-field-error="targetFlow" hidden></em>
+          </label>
+          <label class="field">
+            <span>时段起</span>
+            <input type="date" name="windowStart" />
+            <em class="field-msg" data-field-error="windowStart" hidden></em>
+          </label>
+          <label class="field">
+            <span>时段止</span>
+            <input type="date" name="windowEnd" />
+            <em class="field-msg" data-field-error="windowEnd" hidden></em>
+          </label>
+          <label class="field">
+            <span>状态</span>
+            <select name="status">
+              <option value="已下达">已下达</option>
+              <option value="执行中">执行中</option>
+              <option value="已完成">已完成</option>
+              <option value="已撤销">已撤销</option>
+            </select>
+            <em class="field-msg" data-field-error="status" hidden></em>
+          </label>
+          <label class="field">
+            <span>下达人</span>
+            <input type="text" name="issuer" placeholder="调度科" />
+            <em class="field-msg" data-field-error="issuer" hidden></em>
+          </label>
+          <label class="field">
+            <span>理由</span>
+            <input type="text" name="reason" placeholder="满足下游灌溉用水" />
+            <em class="field-msg" data-field-error="reason" hidden></em>
+          </label>
+          <label class="field field-wide">
+            <span>备注</span>
+            <input type="text" name="remark" placeholder="可不填" />
+            <em class="field-msg" data-field-error="remark" hidden></em>
+          </label>
+          <div class="field-actions">
+            <button type="submit" class="btn btn-primary">下达指令</button>
+          </div>
+        </form>
+        <div class="form-error" id="orderFormError" hidden></div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table" id="orderTable">
+          <thead>
+            <tr>
+              <th>编号</th>
+              <th>水库</th>
+              <th>下达日期</th>
+              <th class="num">目标下泄流量</th>
+              <th>时段</th>
+              <th>状态</th>
+              <th class="num">实际均值</th>
+              <th class="num">偏差</th>
+              <th class="num">附件数</th>
+            </tr>
+          </thead>
+          <tbody id="orderRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="view" data-view="balance">
+      <div class="view-head">
+        <div>
+          <h2>水量平衡</h2>
+          <p class="view-sub">入库水量、出库水量、损失、蓄变、残差、容差与「是否平衡」全部直接显示 <code>GET /api/balance</code> 返回的字段，前端不重算，只把口径一行行写出来。</p>
+        </div>
+        <div class="view-actions">
+          <button type="button" class="btn btn-ghost" data-action="reload" data-view="balance">刷新</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>选择水库与时段</h3>
+        <form class="form-grid" id="balanceForm" novalidate>
+          <label class="field">
+            <span>水库</span>
+            <select name="reservoirId" id="balanceReservoir"></select>
+            <em class="field-msg" data-field-error="reservoirId" hidden></em>
+          </label>
+          <label class="field">
+            <span>起始日期</span>
+            <input type="date" name="from" id="balanceFrom" />
+            <em class="field-msg" data-field-error="from" hidden></em>
+          </label>
+          <label class="field">
+            <span>结束日期</span>
+            <input type="date" name="to" id="balanceTo" />
+            <em class="field-msg" data-field-error="to" hidden></em>
+          </label>
+          <div class="field-actions">
+            <button type="submit" class="btn btn-primary">计算</button>
+          </div>
+        </form>
+        <div class="form-error" id="balanceFormError" hidden></div>
+      </div>
+
+      <div class="card">
+        <h3>平衡结果 <span class="card-sub">接口 <code>GET /api/balance</code></span></h3>
+        <div id="balanceResult">
+          <p class="empty">先选水库与起止日期，再点「计算」。</p>
+        </div>
+      </div>
+    </section>
+
+  </section>
+</main>
+
+<div class="toast" id="toast" hidden></div>
+
+<div class="modal-mask" id="modalMask" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <h2 id="modalTitle">弹层</h2>
+      <button type="button" class="btn btn-ghost btn-sm" data-action="close-modal">关闭</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-error" id="modalError" hidden></div>
+      <div id="modalBody"></div>
+    </div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,1823 @@
+{
+  "settings": {
+    "volumeUnit": "万m³",
+    "flowUnit": "m³/s",
+    "floodSeasonStart": "05-15",
+    "floodSeasonEnd": "09-15",
+    "balanceToleranceWan": 0.5,
+    "lossPerDayWan": 1.2,
+    "levelPrecision": 0.01,
+    "inflowAttentionFlow": 120,
+    "inflowSeriousFlow": 260
+  },
+  "reservoirs": [
+    {
+      "id": "res-0001",
+      "code": "SK001",
+      "name": "青岭水库",
+      "normalLevel": 98,
+      "floodLimitLevel": 97.2,
+      "deadLevel": 92,
+      "warningLevel": 97.5,
+      "status": "运行",
+      "basin": "青江流域",
+      "remark": "大（2）型"
+    },
+    {
+      "id": "res-0002",
+      "code": "SK002",
+      "name": "白河水库",
+      "normalLevel": 94.2,
+      "floodLimitLevel": 93,
+      "deadLevel": 88.5,
+      "warningLevel": 93.5,
+      "status": "运行",
+      "basin": "白河流域",
+      "remark": "中型"
+    }
+  ],
+  "curves": [
+    {
+      "id": "curve-0001",
+      "reservoirId": "res-0001",
+      "verifiedOn": "2026-03-20",
+      "remark": "2026 年复测成果",
+      "points": [
+        {
+          "level": 92,
+          "capacity": 1200
+        },
+        {
+          "level": 94,
+          "capacity": 1850
+        },
+        {
+          "level": 96,
+          "capacity": 2600
+        },
+        {
+          "level": 97.2,
+          "capacity": 3150
+        },
+        {
+          "level": 98,
+          "capacity": 3600
+        },
+        {
+          "level": 100,
+          "capacity": 4900
+        }
+      ]
+    },
+    {
+      "id": "curve-0002",
+      "reservoirId": "res-0002",
+      "verifiedOn": "2026-03-20",
+      "remark": "",
+      "points": [
+        {
+          "level": 88.5,
+          "capacity": 600
+        },
+        {
+          "level": 90,
+          "capacity": 900
+        },
+        {
+          "level": 92,
+          "capacity": 1300
+        },
+        {
+          "level": 93,
+          "capacity": 1500
+        },
+        {
+          "level": 94.2,
+          "capacity": 1900
+        },
+        {
+          "level": 96,
+          "capacity": 2400
+        }
+      ]
+    }
+  ],
+  "levels": [
+    {
+      "id": "lev-0001",
+      "reservoirId": "res-0001",
+      "date": "2026-05-01",
+      "time": "08:00",
+      "level": 96.5,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0002",
+      "reservoirId": "res-0001",
+      "date": "2026-05-02",
+      "time": "08:00",
+      "level": 96.63,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0003",
+      "reservoirId": "res-0001",
+      "date": "2026-05-03",
+      "time": "08:00",
+      "level": 96.78,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0004",
+      "reservoirId": "res-0001",
+      "date": "2026-05-04",
+      "time": "08:00",
+      "level": 96.95,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0005",
+      "reservoirId": "res-0001",
+      "date": "2026-05-05",
+      "time": "08:00",
+      "level": 97.14,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0006",
+      "reservoirId": "res-0001",
+      "date": "2026-05-06",
+      "time": "08:00",
+      "level": 97.32,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0007",
+      "reservoirId": "res-0001",
+      "date": "2026-05-07",
+      "time": "08:00",
+      "level": 97.5,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0008",
+      "reservoirId": "res-0001",
+      "date": "2026-05-08",
+      "time": "08:00",
+      "level": 97.59,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0009",
+      "reservoirId": "res-0001",
+      "date": "2026-05-09",
+      "time": "08:00",
+      "level": 97.7,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0010",
+      "reservoirId": "res-0001",
+      "date": "2026-05-10",
+      "time": "08:00",
+      "level": 97.82,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0011",
+      "reservoirId": "res-0001",
+      "date": "2026-05-11",
+      "time": "08:00",
+      "level": 97.96,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0012",
+      "reservoirId": "res-0001",
+      "date": "2026-05-12",
+      "time": "08:00",
+      "level": 98.1,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0013",
+      "reservoirId": "res-0001",
+      "date": "2026-05-13",
+      "time": "08:00",
+      "level": 98.24,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0014",
+      "reservoirId": "res-0001",
+      "date": "2026-05-14",
+      "time": "08:00",
+      "level": 98.4,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0015",
+      "reservoirId": "res-0001",
+      "date": "2026-05-15",
+      "time": "08:00",
+      "level": 98.48,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0016",
+      "reservoirId": "res-0001",
+      "date": "2026-05-16",
+      "time": "08:00",
+      "level": 98.57,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0017",
+      "reservoirId": "res-0001",
+      "date": "2026-05-17",
+      "time": "08:00",
+      "level": 98.67,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0018",
+      "reservoirId": "res-0001",
+      "date": "2026-05-18",
+      "time": "08:00",
+      "level": 98.79,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0019",
+      "reservoirId": "res-0001",
+      "date": "2026-05-19",
+      "time": "08:00",
+      "level": 98.92,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0020",
+      "reservoirId": "res-0001",
+      "date": "2026-05-20",
+      "time": "08:00",
+      "level": 99.06,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0021",
+      "reservoirId": "res-0001",
+      "date": "2026-05-21",
+      "time": "08:00",
+      "level": 99.22,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0022",
+      "reservoirId": "res-0001",
+      "date": "2026-06-01",
+      "time": "08:00",
+      "level": 97.35,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0023",
+      "reservoirId": "res-0001",
+      "date": "2026-06-02",
+      "time": "08:00",
+      "level": 98.17,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0024",
+      "reservoirId": "res-0001",
+      "date": "2026-06-03",
+      "time": "08:00",
+      "level": 98.91,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0025",
+      "reservoirId": "res-0001",
+      "date": "2026-06-04",
+      "time": "08:00",
+      "level": 99.67,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0026",
+      "reservoirId": "res-0001",
+      "date": "2026-06-05",
+      "time": "08:00",
+      "level": 100,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0027",
+      "reservoirId": "res-0001",
+      "date": "2026-06-06",
+      "time": "08:00",
+      "level": 100,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0028",
+      "reservoirId": "res-0001",
+      "date": "2026-06-07",
+      "time": "08:00",
+      "level": 100,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0029",
+      "reservoirId": "res-0001",
+      "date": "2026-06-08",
+      "time": "08:00",
+      "level": 100,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0030",
+      "reservoirId": "res-0001",
+      "date": "2026-06-09",
+      "time": "08:00",
+      "level": 100,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0031",
+      "reservoirId": "res-0001",
+      "date": "2026-06-10",
+      "time": "08:00",
+      "level": 100,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0032",
+      "reservoirId": "res-0001",
+      "date": "2026-06-11",
+      "time": "08:00",
+      "level": 100,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0033",
+      "reservoirId": "res-0001",
+      "date": "2026-09-08",
+      "time": "08:00",
+      "level": 97.6,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0034",
+      "reservoirId": "res-0001",
+      "date": "2026-09-09",
+      "time": "08:00",
+      "level": 97.69,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0035",
+      "reservoirId": "res-0001",
+      "date": "2026-09-10",
+      "time": "08:00",
+      "level": 97.8,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0036",
+      "reservoirId": "res-0001",
+      "date": "2026-09-11",
+      "time": "08:00",
+      "level": 97.92,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0037",
+      "reservoirId": "res-0001",
+      "date": "2026-09-12",
+      "time": "08:00",
+      "level": 98.05,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0038",
+      "reservoirId": "res-0001",
+      "date": "2026-09-13",
+      "time": "08:00",
+      "level": 98.13,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0039",
+      "reservoirId": "res-0001",
+      "date": "2026-09-14",
+      "time": "08:00",
+      "level": 98.22,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0040",
+      "reservoirId": "res-0001",
+      "date": "2026-09-15",
+      "time": "08:00",
+      "level": 98.32,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0041",
+      "reservoirId": "res-0001",
+      "date": "2026-09-16",
+      "time": "08:00",
+      "level": 98.44,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0042",
+      "reservoirId": "res-0001",
+      "date": "2026-09-17",
+      "time": "08:00",
+      "level": 98.52,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0043",
+      "reservoirId": "res-0001",
+      "date": "2026-09-18",
+      "time": "08:00",
+      "level": 98.61,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0044",
+      "reservoirId": "res-0001",
+      "date": "2026-09-19",
+      "time": "08:00",
+      "level": 98.71,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0045",
+      "reservoirId": "res-0001",
+      "date": "2026-09-20",
+      "time": "08:00",
+      "level": 98.83,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0046",
+      "reservoirId": "res-0002",
+      "date": "2026-05-01",
+      "time": "08:00",
+      "level": 92.4,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0047",
+      "reservoirId": "res-0002",
+      "date": "2026-05-02",
+      "time": "08:00",
+      "level": 92.61,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0048",
+      "reservoirId": "res-0002",
+      "date": "2026-05-03",
+      "time": "08:00",
+      "level": 92.86,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0049",
+      "reservoirId": "res-0002",
+      "date": "2026-05-04",
+      "time": "08:00",
+      "level": 93.09,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0050",
+      "reservoirId": "res-0002",
+      "date": "2026-05-05",
+      "time": "08:00",
+      "level": 93.29,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0051",
+      "reservoirId": "res-0002",
+      "date": "2026-05-06",
+      "time": "08:00",
+      "level": 93.39,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0052",
+      "reservoirId": "res-0002",
+      "date": "2026-05-07",
+      "time": "08:00",
+      "level": 93.52,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0053",
+      "reservoirId": "res-0002",
+      "date": "2026-05-08",
+      "time": "08:00",
+      "level": 93.67,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0054",
+      "reservoirId": "res-0002",
+      "date": "2026-05-09",
+      "time": "08:00",
+      "level": 93.85,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0055",
+      "reservoirId": "res-0002",
+      "date": "2026-05-10",
+      "time": "08:00",
+      "level": 94.05,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0056",
+      "reservoirId": "res-0002",
+      "date": "2026-05-11",
+      "time": "08:00",
+      "level": 94.15,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0057",
+      "reservoirId": "res-0002",
+      "date": "2026-05-12",
+      "time": "08:00",
+      "level": 94.29,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0058",
+      "reservoirId": "res-0002",
+      "date": "2026-05-13",
+      "time": "08:00",
+      "level": 94.47,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0059",
+      "reservoirId": "res-0002",
+      "date": "2026-05-14",
+      "time": "08:00",
+      "level": 94.68,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0060",
+      "reservoirId": "res-0002",
+      "date": "2026-05-15",
+      "time": "08:00",
+      "level": 94.92,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "lev-0061",
+      "reservoirId": "res-0002",
+      "date": "2026-05-16",
+      "time": "08:00",
+      "level": 95.04,
+      "source": "实测",
+      "recorder": "值班员",
+      "remark": ""
+    }
+  ],
+  "inflows": [
+    {
+      "id": "in-0001",
+      "reservoirId": "res-0001",
+      "date": "2026-05-01",
+      "flow": 59,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0002",
+      "reservoirId": "res-0001",
+      "date": "2026-05-02",
+      "flow": 60,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0003",
+      "reservoirId": "res-0001",
+      "date": "2026-05-03",
+      "flow": 61,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0004",
+      "reservoirId": "res-0001",
+      "date": "2026-05-04",
+      "flow": 62,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0005",
+      "reservoirId": "res-0001",
+      "date": "2026-05-05",
+      "flow": 63,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0006",
+      "reservoirId": "res-0001",
+      "date": "2026-05-06",
+      "flow": 64,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0007",
+      "reservoirId": "res-0001",
+      "date": "2026-05-07",
+      "flow": 58,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0008",
+      "reservoirId": "res-0001",
+      "date": "2026-05-08",
+      "flow": 59,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0009",
+      "reservoirId": "res-0001",
+      "date": "2026-05-09",
+      "flow": 60,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0010",
+      "reservoirId": "res-0001",
+      "date": "2026-05-10",
+      "flow": 61,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0011",
+      "reservoirId": "res-0001",
+      "date": "2026-05-11",
+      "flow": 62,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0012",
+      "reservoirId": "res-0001",
+      "date": "2026-05-12",
+      "flow": 63,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0013",
+      "reservoirId": "res-0001",
+      "date": "2026-05-13",
+      "flow": 64,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0014",
+      "reservoirId": "res-0001",
+      "date": "2026-05-14",
+      "flow": 58,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0015",
+      "reservoirId": "res-0001",
+      "date": "2026-05-15",
+      "flow": 59,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0016",
+      "reservoirId": "res-0001",
+      "date": "2026-05-16",
+      "flow": 60,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0017",
+      "reservoirId": "res-0001",
+      "date": "2026-05-17",
+      "flow": 61,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0018",
+      "reservoirId": "res-0001",
+      "date": "2026-05-18",
+      "flow": 62,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0019",
+      "reservoirId": "res-0001",
+      "date": "2026-05-19",
+      "flow": 63,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0020",
+      "reservoirId": "res-0001",
+      "date": "2026-05-20",
+      "flow": 64,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0021",
+      "reservoirId": "res-0001",
+      "date": "2026-06-01",
+      "flow": 151,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0022",
+      "reservoirId": "res-0001",
+      "date": "2026-06-02",
+      "flow": 152,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0023",
+      "reservoirId": "res-0001",
+      "date": "2026-06-03",
+      "flow": 153,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0024",
+      "reservoirId": "res-0001",
+      "date": "2026-06-04",
+      "flow": 154,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0025",
+      "reservoirId": "res-0001",
+      "date": "2026-06-05",
+      "flow": 150,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0026",
+      "reservoirId": "res-0001",
+      "date": "2026-06-06",
+      "flow": 151,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0027",
+      "reservoirId": "res-0001",
+      "date": "2026-06-07",
+      "flow": 152,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0028",
+      "reservoirId": "res-0001",
+      "date": "2026-06-08",
+      "flow": 320,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0029",
+      "reservoirId": "res-0001",
+      "date": "2026-06-09",
+      "flow": 154,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0030",
+      "reservoirId": "res-0001",
+      "date": "2026-06-10",
+      "flow": 150,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0031",
+      "reservoirId": "res-0001",
+      "date": "2026-09-08",
+      "flow": 66,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0032",
+      "reservoirId": "res-0001",
+      "date": "2026-09-09",
+      "flow": 67,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0033",
+      "reservoirId": "res-0001",
+      "date": "2026-09-10",
+      "flow": 68,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0034",
+      "reservoirId": "res-0001",
+      "date": "2026-09-11",
+      "flow": 69,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0035",
+      "reservoirId": "res-0001",
+      "date": "2026-09-12",
+      "flow": 66,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0036",
+      "reservoirId": "res-0001",
+      "date": "2026-09-13",
+      "flow": 67,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0037",
+      "reservoirId": "res-0001",
+      "date": "2026-09-14",
+      "flow": 68,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0038",
+      "reservoirId": "res-0001",
+      "date": "2026-09-15",
+      "flow": 69,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0039",
+      "reservoirId": "res-0001",
+      "date": "2026-09-16",
+      "flow": 66,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0040",
+      "reservoirId": "res-0001",
+      "date": "2026-09-17",
+      "flow": 67,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0041",
+      "reservoirId": "res-0001",
+      "date": "2026-09-18",
+      "flow": 68,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0042",
+      "reservoirId": "res-0001",
+      "date": "2026-09-19",
+      "flow": 69,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0043",
+      "reservoirId": "res-0002",
+      "date": "2026-05-01",
+      "flow": 43,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0044",
+      "reservoirId": "res-0002",
+      "date": "2026-05-02",
+      "flow": 44,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0045",
+      "reservoirId": "res-0002",
+      "date": "2026-05-03",
+      "flow": 45,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0046",
+      "reservoirId": "res-0002",
+      "date": "2026-05-04",
+      "flow": 46,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0047",
+      "reservoirId": "res-0002",
+      "date": "2026-05-05",
+      "flow": 42,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0048",
+      "reservoirId": "res-0002",
+      "date": "2026-05-06",
+      "flow": 43,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0049",
+      "reservoirId": "res-0002",
+      "date": "2026-05-07",
+      "flow": 44,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0050",
+      "reservoirId": "res-0002",
+      "date": "2026-05-08",
+      "flow": 45,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0051",
+      "reservoirId": "res-0002",
+      "date": "2026-05-09",
+      "flow": 46,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0052",
+      "reservoirId": "res-0002",
+      "date": "2026-05-10",
+      "flow": 42,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0053",
+      "reservoirId": "res-0002",
+      "date": "2026-05-11",
+      "flow": 43,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0054",
+      "reservoirId": "res-0002",
+      "date": "2026-05-12",
+      "flow": 44,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0055",
+      "reservoirId": "res-0002",
+      "date": "2026-05-13",
+      "flow": 45,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0056",
+      "reservoirId": "res-0002",
+      "date": "2026-05-14",
+      "flow": 46,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "in-0057",
+      "reservoirId": "res-0002",
+      "date": "2026-05-15",
+      "flow": 42,
+      "type": "实测",
+      "operator": "值班员",
+      "remark": ""
+    }
+  ],
+  "releases": [
+    {
+      "id": "out-0001",
+      "reservoirId": "res-0001",
+      "date": "2026-05-01",
+      "flow": 52,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0002",
+      "reservoirId": "res-0001",
+      "date": "2026-05-02",
+      "flow": 52,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0003",
+      "reservoirId": "res-0001",
+      "date": "2026-05-03",
+      "flow": 52,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0004",
+      "reservoirId": "res-0001",
+      "date": "2026-05-04",
+      "flow": 52,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0005",
+      "reservoirId": "res-0001",
+      "date": "2026-05-05",
+      "flow": 52,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0006",
+      "reservoirId": "res-0001",
+      "date": "2026-05-06",
+      "flow": 52,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0007",
+      "reservoirId": "res-0001",
+      "date": "2026-05-07",
+      "flow": 52,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0008",
+      "reservoirId": "res-0001",
+      "date": "2026-05-08",
+      "flow": 52,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0009",
+      "reservoirId": "res-0001",
+      "date": "2026-05-09",
+      "flow": 52,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0010",
+      "reservoirId": "res-0001",
+      "date": "2026-05-10",
+      "flow": 52,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0011",
+      "reservoirId": "res-0001",
+      "date": "2026-05-11",
+      "flow": 52,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0012",
+      "reservoirId": "res-0001",
+      "date": "2026-05-12",
+      "flow": 52,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0013",
+      "reservoirId": "res-0001",
+      "date": "2026-05-13",
+      "flow": 52,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0014",
+      "reservoirId": "res-0001",
+      "date": "2026-05-14",
+      "flow": 52,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0015",
+      "reservoirId": "res-0001",
+      "date": "2026-05-15",
+      "flow": 52,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0016",
+      "reservoirId": "res-0001",
+      "date": "2026-05-16",
+      "flow": 52,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0017",
+      "reservoirId": "res-0001",
+      "date": "2026-05-17",
+      "flow": 52,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0018",
+      "reservoirId": "res-0001",
+      "date": "2026-05-18",
+      "flow": 52,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0019",
+      "reservoirId": "res-0001",
+      "date": "2026-05-19",
+      "flow": 52,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0020",
+      "reservoirId": "res-0001",
+      "date": "2026-05-20",
+      "flow": 52,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0021",
+      "reservoirId": "res-0001",
+      "date": "2026-06-01",
+      "flow": 96,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0022",
+      "reservoirId": "res-0001",
+      "date": "2026-06-02",
+      "flow": 96,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0023",
+      "reservoirId": "res-0001",
+      "date": "2026-06-03",
+      "flow": 96,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0024",
+      "reservoirId": "res-0001",
+      "date": "2026-06-04",
+      "flow": 96,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0025",
+      "reservoirId": "res-0001",
+      "date": "2026-06-05",
+      "flow": 96,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0026",
+      "reservoirId": "res-0001",
+      "date": "2026-06-06",
+      "flow": 96,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0027",
+      "reservoirId": "res-0001",
+      "date": "2026-06-07",
+      "flow": 96,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0028",
+      "reservoirId": "res-0001",
+      "date": "2026-06-08",
+      "flow": 96,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0029",
+      "reservoirId": "res-0001",
+      "date": "2026-06-09",
+      "flow": 96,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0030",
+      "reservoirId": "res-0001",
+      "date": "2026-06-10",
+      "flow": 96,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0031",
+      "reservoirId": "res-0001",
+      "date": "2026-09-08",
+      "flow": 60,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0032",
+      "reservoirId": "res-0001",
+      "date": "2026-09-09",
+      "flow": 60,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0033",
+      "reservoirId": "res-0001",
+      "date": "2026-09-10",
+      "flow": 60,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0034",
+      "reservoirId": "res-0001",
+      "date": "2026-09-11",
+      "flow": 60,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0035",
+      "reservoirId": "res-0001",
+      "date": "2026-09-12",
+      "flow": 60,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0036",
+      "reservoirId": "res-0001",
+      "date": "2026-09-13",
+      "flow": 60,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0037",
+      "reservoirId": "res-0001",
+      "date": "2026-09-14",
+      "flow": 60,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0038",
+      "reservoirId": "res-0001",
+      "date": "2026-09-15",
+      "flow": 60,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0039",
+      "reservoirId": "res-0001",
+      "date": "2026-09-16",
+      "flow": 60,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0040",
+      "reservoirId": "res-0001",
+      "date": "2026-09-17",
+      "flow": 60,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0041",
+      "reservoirId": "res-0001",
+      "date": "2026-09-18",
+      "flow": 60,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0042",
+      "reservoirId": "res-0001",
+      "date": "2026-09-19",
+      "flow": 60,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0043",
+      "reservoirId": "res-0002",
+      "date": "2026-05-01",
+      "flow": 38,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0044",
+      "reservoirId": "res-0002",
+      "date": "2026-05-02",
+      "flow": 38,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0045",
+      "reservoirId": "res-0002",
+      "date": "2026-05-03",
+      "flow": 38,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0046",
+      "reservoirId": "res-0002",
+      "date": "2026-05-04",
+      "flow": 38,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0047",
+      "reservoirId": "res-0002",
+      "date": "2026-05-05",
+      "flow": 38,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0048",
+      "reservoirId": "res-0002",
+      "date": "2026-05-06",
+      "flow": 38,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0049",
+      "reservoirId": "res-0002",
+      "date": "2026-05-07",
+      "flow": 38,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0050",
+      "reservoirId": "res-0002",
+      "date": "2026-05-08",
+      "flow": 38,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0051",
+      "reservoirId": "res-0002",
+      "date": "2026-05-09",
+      "flow": 38,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0052",
+      "reservoirId": "res-0002",
+      "date": "2026-05-10",
+      "flow": 38,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0053",
+      "reservoirId": "res-0002",
+      "date": "2026-05-11",
+      "flow": 38,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0054",
+      "reservoirId": "res-0002",
+      "date": "2026-05-12",
+      "flow": 38,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0055",
+      "reservoirId": "res-0002",
+      "date": "2026-05-13",
+      "flow": 38,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0056",
+      "reservoirId": "res-0002",
+      "date": "2026-05-14",
+      "flow": 38,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    },
+    {
+      "id": "out-0057",
+      "reservoirId": "res-0002",
+      "date": "2026-05-15",
+      "flow": 38,
+      "type": "发电",
+      "operator": "值班员",
+      "remark": ""
+    }
+  ],
+  "orders": [
+    {
+      "id": "ord-0001",
+      "code": "ZL-0001",
+      "reservoirId": "res-0001",
+      "issuedAt": "2026-05-06",
+      "targetFlow": 60,
+      "windowStart": "2026-05-06",
+      "windowEnd": "2026-05-10",
+      "status": "已完成",
+      "reason": "满足下游灌溉用水",
+      "issuer": "调度科",
+      "remark": "",
+      "attachments": [
+        {
+          "name": "灌溉用水申请",
+          "note": "镇水利站报送",
+          "at": "2026-05-06"
+        }
+      ]
+    },
+    {
+      "id": "ord-0002",
+      "code": "ZL-0002",
+      "reservoirId": "res-0001",
+      "issuedAt": "2026-06-08",
+      "targetFlow": 200,
+      "windowStart": "2026-06-08",
+      "windowEnd": "2026-06-10",
+      "status": "已完成",
+      "reason": "应对 6 月 8 日强降雨，提前预泄",
+      "issuer": "调度科",
+      "remark": "",
+      "attachments": [
+        {
+          "name": "气象预报单",
+          "note": "暴雨橙色预警",
+          "at": "2026-06-08"
+        }
+      ]
+    },
+    {
+      "id": "ord-0003",
+      "code": "ZL-0003",
+      "reservoirId": "res-0001",
+      "issuedAt": "2026-09-12",
+      "targetFlow": 62,
+      "windowStart": "2026-09-12",
+      "windowEnd": "2026-09-18",
+      "status": "执行中",
+      "reason": "汛末水位回落",
+      "issuer": "调度科",
+      "remark": "",
+      "attachments": []
+    },
+    {
+      "id": "ord-0004",
+      "code": "ZL-0004",
+      "reservoirId": "res-0002",
+      "issuedAt": "2026-05-04",
+      "targetFlow": 40,
+      "windowStart": "2026-05-04",
+      "windowEnd": "2026-05-09",
+      "status": "已撤销",
+      "reason": "原计划供水，后因降雨取消",
+      "issuer": "调度科",
+      "remark": "",
+      "attachments": [
+        {
+          "name": "撤销说明",
+          "note": "来电撤销",
+          "at": "2026-05-05"
+        }
+      ]
+    }
+  ]
+}
