@@ -6,9 +6,11 @@
 
   /* ================= 常量与工具 ================= */
 
-  var VIEW_IDS = ['overview', 'reservoirs', 'water', 'orders', 'balance'];
+  var VIEW_IDS = ['overview', 'reservoirs', 'water', 'orders', 'warnings', 'balance'];
   var ORDER_STATUSES = ['已下达', '执行中', '已完成', '已撤销'];
   var RESERVOIR_STATUSES = ['运行', '检修'];
+  var WARNING_LEVELS = ['严重', '警戒', '注意'];
+  var RECEIPTS = ['未回', '已收到', '有异议'];
 
   function el(id) { return document.getElementById(id); }
   function qs(sel, root) { return (root || document).querySelector(sel); }
@@ -127,8 +129,9 @@
     levels: [],
     flows: { inflow: [], release: [] },
     orders: [],
+    warnings: [],
     balance: null,
-    expanded: { reservoir: '', level: '', flow: '', order: '' },
+    expanded: { reservoir: '', level: '', flow: '', order: '', warning: '' },
     reservoirDetail: null,
     curveDraft: null,
     curveQuery: { reservoirId: '', byLevel: null, byCapacity: null },
@@ -137,6 +140,7 @@
       reservoirs: { basin: '', status: '', keyword: '' },
       water: { reservoirId: '', from: '', to: '' },
       orders: { reservoirId: '', status: '' },
+      warnings: { reservoirId: '', level: '' },
       balance: { reservoirId: '', from: '2026-05-01', to: '2026-05-10' }
     }
   };
@@ -243,6 +247,10 @@
       } else if (view === 'orders') {
         state.orders = await api('GET', '/api/orders' + ordersQuery());
         renderOrders();
+      } else if (view === 'warnings') {
+        state.warnings = await api('GET', '/api/warnings');
+        state.orders = await api('GET', '/api/orders');
+        renderWarnings();
       } else if (view === 'balance') {
         renderBalance();
       }
@@ -360,6 +368,20 @@
       html.push('<li>实际均值与偏差取接口</li>');
       html.push('<li>删除一律两步确认</li>');
       html.push('</ul></div>');
+    } else if (view === 'warnings') {
+      html.push('<div class="side-block">');
+      html.push('<h3>筛选预警</h3>');
+      html.push('<label class="field"><span>水库</span><select data-filter-key="reservoirId" data-filter-scope="warnings">' + reservoirOptions(f.reservoirId) + '</select></label>');
+      html.push('<label class="field"><span>等级</span><select data-filter-key="level" data-filter-scope="warnings">' + stringOptions(WARNING_LEVELS, f.level, '全部等级') + '</select></label>');
+      html.push('<button type="button" class="btn btn-ghost btn-sm" data-action="reset-filter" data-scope="warnings">重置筛选</button>');
+      html.push('</div>');
+      html.push('<div class="side-block"><h3>口径</h3><ul class="side-list">');
+      html.push('<li>第几次发布＝同库同等级按下达时刻排的序号（接口给出）</li>');
+      html.push('<li>差别与矛盾都对照上一次同等级预警</li>');
+      html.push('<li>矛盾：水位或流量回落仍发同级、触发依据完全更换</li>');
+      html.push('<li>回执三态：已收到 / 有异议 / 未回</li>');
+      html.push('<li>未回执与矛盾挂在页面顶部待办</li>');
+      html.push('</ul></div>');
     } else if (view === 'balance') {
       html.push('<div class="side-block">');
       html.push('<h3>水量平衡口径</h3><ul class="side-list">');
@@ -416,6 +438,9 @@
         metricCard('指令数', s.orderCount, '点卡去「调度指令」', 'orders', ''),
         metricCard('执行中加已下达', active, '执行中与已下达合计', 'orders', ''),
         metricCard('偏差超限指令数', s.orderDeviationCount, '偏差绝对值大于 5 的指令', 'orders', '', true),
+        metricCard('预警事件数', s.warningCount, '点卡去「泄洪预警」', 'warnings', ''),
+        metricCard('未回执通知', s.warningUnrepliedCount, '还没回执的通知对象数', 'warnings', '', true),
+        metricCard('矛盾提示', s.warningContradictionCount, '同级再发但数据对不上的预警', 'warnings', '', true),
         metricCard('每天损失', s.lossPerDayWan, '单位 万m³，可去设置里改', 'balance', ''),
         metricCard('容差', s.toleranceWan, '单位 万m³，可去设置里改', 'balance', '')
       ].join('');
@@ -785,6 +810,277 @@
     tbody.innerHTML = html.join('');
   }
 
+  /* ================= 泄洪预警 ================= */
+
+  function receiptTag(receipt) {
+    var cls = receipt === '已收到' ? 'tag is-ok' : (receipt === '有异议' ? 'tag is-warn' : 'tag is-over');
+    return '<span class="' + cls + '">' + esc(dash(receipt || '未回')) + '</span>';
+  }
+
+  function notifyTagsHtml(w) {
+    if (!w.notifyTotal) return '<span class="tag">未登记通知</span>';
+    var tags = [];
+    if (w.notifyReceived) tags.push('<span class="tag is-ok">已收到 ' + w.notifyReceived + '</span>');
+    if (w.notifyObjection) tags.push('<span class="tag is-warn">有异议 ' + w.notifyObjection + '</span>');
+    if (w.notifyUnreplied) tags.push('<span class="tag is-over">未回 ' + w.notifyUnreplied + '</span>');
+    return tags.join(' ');
+  }
+
+  /* 顶部待办：未回执、有异议、矛盾提示，全部从接口返回的清单里挑出来挂在这 */
+  function renderWarnTodo() {
+    var box = el('warnTodoCard');
+    var unreplied = [];
+    var objections = [];
+    var contradictions = [];
+    (state.warnings || []).forEach(function (w) {
+      (w.notifications || []).forEach(function (n) {
+        var receipt = RECEIPTS.indexOf(n.receipt) >= 0 ? n.receipt : '未回';
+        if (receipt === '未回') unreplied.push({ warning: w, n: n });
+        else if (receipt === '有异议') objections.push({ warning: w, n: n });
+      });
+      if (w.contradiction && w.contradiction.flag) contradictions.push(w);
+    });
+
+    var html = ['<h3>通知闭环待办 <span class="card-sub">未回执 ' + unreplied.length + ' · 有异议 ' + objections.length + ' · 矛盾提示 ' + contradictions.length + '</span></h3>'];
+    if (!unreplied.length && !objections.length && !contradictions.length) {
+      html.push('<p class="empty">通知全部闭环，也没有矛盾提示。</p>');
+    }
+    function notifyItem(item, tag) {
+      var w = item.warning;
+      var n = item.n;
+      return '<li class="todo-item">' + tag
+        + '<span class="todo-text"><b>' + esc(w.code) + '</b>（' + esc(dash(w.reservoirName)) + ' · ' + esc(w.level) + '）→ '
+        + esc(n.unit) + ' ' + esc(n.contact) + '（' + esc(n.method) + '），通知于 ' + esc(n.notifiedAt + ' ' + n.notifiedTime)
+        + (n.note ? '，备注：' + esc(n.note) : '') + '</span>'
+        + '<button type="button" class="btn btn-sm" data-action="jump-warning" data-id="' + esc(w.id) + '">去登记回执</button>'
+        + '</li>';
+    }
+    if (unreplied.length) {
+      html.push('<h4 class="todo-head">未回执（' + unreplied.length + '）</h4><ul class="todo-list">');
+      html.push(unreplied.map(function (item) { return notifyItem(item, '<span class="tag is-over">未回</span>'); }).join(''));
+      html.push('</ul>');
+    }
+    if (objections.length) {
+      html.push('<h4 class="todo-head">有异议（' + objections.length + '）</h4><ul class="todo-list">');
+      html.push(objections.map(function (item) { return notifyItem(item, '<span class="tag is-warn">有异议</span>'); }).join(''));
+      html.push('</ul>');
+    }
+    if (contradictions.length) {
+      html.push('<h4 class="todo-head">矛盾提示（' + contradictions.length + '）</h4><ul class="todo-list">');
+      html.push(contradictions.map(function (w) {
+        return '<li class="todo-item"><span class="tag is-serious">矛盾</span>'
+          + '<span class="todo-text"><b>' + esc(w.code) + '</b>（' + esc(dash(w.reservoirName)) + ' · ' + esc(w.level) + ' · 第 ' + w.seq + ' 次）：'
+          + esc((w.contradiction.reasons || []).join('；')) + '</span>'
+          + '<button type="button" class="btn btn-sm" data-action="jump-warning" data-id="' + esc(w.id) + '">去查看</button>'
+          + '</li>';
+      }).join(''));
+      html.push('</ul>');
+    }
+    box.innerHTML = html.join('');
+  }
+
+  /* 关联指令下拉：只列当前所选水库的指令 */
+  function fillWarningOrderSelect() {
+    var sel = el('warningOrderSelect');
+    if (!sel) return;
+    var reservoirSel = el('warningFormReservoir');
+    var rid = reservoirSel ? reservoirSel.value : '';
+    var current = sel.value;
+    var list = (state.orders || []).filter(function (o) { return !rid || o.reservoirId === rid; });
+    sel.innerHTML = optionsHtml(list.map(function (o) {
+      return { value: o.id, label: o.code + '（' + o.targetFlow + ' m³/s，' + o.status + '）' };
+    }), current, '请选择指令');
+  }
+
+  function renderWarnings() {
+    el('warningCount').textContent = '共 ' + (state.warnings || []).length + ' 条';
+    renderWarnTodo();
+    fillWarningOrderSelect();
+
+    var f = state.filters.warnings;
+    var rows = (state.warnings || []).filter(function (w) {
+      if (f.reservoirId && w.reservoirId !== f.reservoirId) return false;
+      if (f.level && w.level !== f.level) return false;
+      return true;
+    });
+    el('warningGroups').innerHTML = WARNING_LEVELS.map(function (level) {
+      var group = rows.filter(function (w) { return w.level === level; });
+      var head = '<h3>' + warningTag(level) + ' <span class="card-sub">共 ' + group.length + ' 条</span></h3>';
+      if (!group.length) {
+        return '<div class="card">' + head + '<p class="empty">这个等级还没有预警。</p></div>';
+      }
+      return '<div class="card">' + head
+        + '<table class="table"><thead><tr>'
+        + '<th>编号</th><th>水库</th><th>第几次</th><th>下达时刻</th><th>下达人</th><th>触发依据</th>'
+        + '<th class="num">水位</th><th class="num">入库流量</th><th>通知回执</th><th>矛盾</th><th>操作</th>'
+        + '</tr></thead><tbody>'
+        + group.map(warningRowHtml).join('')
+        + '</tbody></table></div>';
+    }).join('');
+  }
+
+  function warningRowHtml(w) {
+    var t = w.trigger || {};
+    var expanded = state.expanded.warning === w.id;
+    var hasContra = w.contradiction && w.contradiction.flag;
+    var html = '<tr class="warning-row' + (expanded ? ' is-expanded' : '') + (hasContra ? ' has-contradiction' : '') + '"'
+      + ' data-action="toggle-warning" data-id="' + esc(w.id) + '" data-warning-row="' + esc(w.id) + '">'
+      + '<td>' + esc(w.code) + '</td>'
+      + '<td>' + esc(dash(w.reservoirName)) + '</td>'
+      + '<td>第 ' + esc(w.seq) + ' 次</td>'
+      + '<td>' + esc(w.issuedAt + ' ' + w.issuedTime) + '</td>'
+      + '<td>' + esc(dash(w.issuer)) + '</td>'
+      + '<td>' + esc((t.basis || []).join('＋')) + '</td>'
+      + '<td class="num">' + esc(numText(t.level)) + '</td>'
+      + '<td class="num">' + esc(numText(t.inflow)) + '</td>'
+      + '<td>' + notifyTagsHtml(w) + '</td>'
+      + '<td>' + (hasContra ? '<span class="tag is-serious">矛盾</span>' : '—') + '</td>'
+      + '<td><span class="tag">展开</span></td>'
+      + '</tr>';
+    if (expanded) html += warningDetailHtml(w, 11);
+    return html;
+  }
+
+  function diffPairText(from, to, unit) {
+    var fromMissing = from === null || from === undefined || from === '';
+    var toMissing = to === null || to === undefined || to === '';
+    if (fromMissing && toMissing) return '两次都没登记';
+    if (fromMissing) return '上一次未登记 → 本次 ' + to + ' ' + unit;
+    if (toMissing) return from + ' ' + unit + ' → 本次未登记';
+    return from + ' → ' + to + ' ' + unit;
+  }
+
+  function signedText(value, unit) {
+    if (value === null || value === undefined) return '—';
+    var n = Number(value);
+    if (!Number.isFinite(n)) return String(value);
+    return (n > 0 ? '+' : '') + n + ' ' + unit;
+  }
+
+  function warningDetailHtml(w, colspan) {
+    var t = w.trigger || {};
+    var items = [
+      ['编号', w.code],
+      ['水库', w.reservoirName],
+      ['等级', w.level],
+      ['第几次发布', '第 ' + w.seq + ' 次（该库该等级共 ' + w.seriesCount + ' 次）'],
+      ['下达时刻', w.issuedAt + ' ' + w.issuedTime],
+      ['下达人', w.issuer],
+      ['触发依据', (t.basis || []).join('＋')],
+      ['触发水位（m）', t.level],
+      ['触发入库流量（m³/s）', t.inflow],
+      ['关联指令', t.orderId ? (w.orderMissing ? '指令已删除（' + t.orderId + '）' : w.orderCode) : ''],
+      ['依据说明', t.detail],
+      ['备注', w.remark],
+      ['通知统计', '已收到 ' + w.notifyReceived + ' · 有异议 ' + w.notifyObjection + ' · 未回 ' + w.notifyUnreplied + '（共 ' + w.notifyTotal + ' 家）']
+    ];
+
+    var html = '<tr class="detail-row" data-detail-for="' + esc(w.id) + '"><td colspan="' + colspan + '"><div class="detail" data-warning-id="' + esc(w.id) + '">'
+      + '<h4>预警详情（全部取接口字段）</h4>'
+      + '<div class="detail-grid">' + items.map(itemHtml).join('') + '</div>';
+
+    /* 与上一次同等级发布的对比 */
+    html += '<h4>与上一次对比 <span class="card-sub">差别与矛盾都是接口算好的</span></h4>';
+    if (!w.previous) {
+      html += '<p class="empty">这是该库该等级第 1 次发布，没有上一次可对比。</p>';
+    } else {
+      var p = w.previous;
+      var pt = p.trigger || {};
+      var d = w.diff || {};
+      var diffItems = [
+        ['上一次', p.code + '（' + p.issuedAt + ' ' + p.issuedTime + '）'],
+        ['触发依据', (d.basisFrom || []).join('＋') + ' → ' + (d.basisTo || []).join('＋') + '（' + (d.basisChanged ? '变了' : '没变') + '）'],
+        ['触发水位', diffPairText(pt.level, t.level, 'm')],
+        ['水位差', signedText(d.levelDiff, 'm')],
+        ['入库流量', diffPairText(pt.inflow, t.inflow, 'm³/s')],
+        ['流量差', signedText(d.inflowDiff, 'm³/s')]
+      ];
+      if ((d.basisFrom || []).indexOf('指令') >= 0 || (d.basisTo || []).indexOf('指令') >= 0) {
+        diffItems.push(['关联指令', (p.orderCode || '（无）') + ' → ' + (w.orderCode || '（无）') + '（' + (d.orderChanged ? '换了' : '没换') + '）']);
+      }
+      html += '<div class="detail-grid">' + diffItems.map(itemHtml).join('') + '</div>';
+      if (w.contradiction && w.contradiction.flag) {
+        html += '<div class="contradiction-box"><b>矛盾提示：两次发布对不上，请核对。</b><ul>'
+          + (w.contradiction.reasons || []).map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('')
+          + '</ul></div>';
+      }
+    }
+
+    /* 通知闭环 */
+    html += '<h4>通知闭环 <span class="card-sub">共 ' + w.notifyTotal + ' 家，未回 ' + w.notifyUnreplied + ' 家；回执改完点「保存回执」走 <code>PATCH /api/warnings/:id/notifications/:nid</code></span></h4>';
+    if (!(w.notifications || []).length) {
+      html += '<p class="empty">还没有登记通知对象。</p>';
+    } else {
+      html += '<table class="mini-table"><thead><tr>'
+        + '<th>单位</th><th>联系人</th><th>方式</th><th>通知时刻</th><th>回执</th><th>回执日期</th><th>回执时刻</th><th>备注</th><th>操作</th>'
+        + '</tr></thead><tbody>'
+        + (w.notifications || []).map(function (n) {
+          var receiptOptions = RECEIPTS.map(function (r) {
+            return '<option value="' + esc(r) + '"' + ((n.receipt || '未回') === r ? ' selected' : '') + '>' + esc(r) + '</option>';
+          }).join('');
+          return '<tr>'
+            + '<td>' + esc(n.unit) + '</td>'
+            + '<td>' + esc(n.contact) + '</td>'
+            + '<td>' + esc(n.method) + '</td>'
+            + '<td>' + esc(n.notifiedAt + ' ' + n.notifiedTime) + '</td>'
+            + '<td><select data-ntf-field="receipt">' + receiptOptions + '</select><em class="field-msg" data-field-error="receipt" hidden></em></td>'
+            + '<td><input type="date" data-ntf-field="receiptAt" value="' + esc(n.receiptAt || '') + '" /><em class="field-msg" data-field-error="receiptAt" hidden></em></td>'
+            + '<td><input type="text" data-ntf-field="receiptTime" value="' + esc(n.receiptTime || '') + '" placeholder="09:00" /><em class="field-msg" data-field-error="receiptTime" hidden></em></td>'
+            + '<td><input type="text" data-ntf-field="note" value="' + esc(n.note || '') + '" /></td>'
+            + '<td><button type="button" class="btn btn-primary btn-sm" data-action="save-receipt" data-id="' + esc(w.id) + '" data-nid="' + esc(n.id) + '">保存回执</button> '
+            + '<button type="button" class="btn btn-sm" data-action="delete-notification" data-id="' + esc(w.id) + '" data-nid="' + esc(n.id) + '">删除</button></td>'
+            + '</tr>';
+        }).join('')
+        + '</tbody></table>';
+    }
+    html += '<div class="inline-form">'
+      + '<label class="field"><span>通知单位</span><input type="text" data-ntfnew-field="unit" placeholder="下游河道管理所" /><em class="field-msg" data-field-error="unit" hidden></em></label>'
+      + '<label class="field"><span>联系人</span><input type="text" data-ntfnew-field="contact" placeholder="王五" /><em class="field-msg" data-field-error="contact" hidden></em></label>'
+      + '<label class="field"><span>方式</span><input type="text" data-ntfnew-field="method" value="电话" /><em class="field-msg" data-field-error="method" hidden></em></label>'
+      + '<label class="field"><span>通知日期</span><input type="date" data-ntfnew-field="notifiedAt" value="' + todayIso() + '" /><em class="field-msg" data-field-error="notifiedAt" hidden></em></label>'
+      + '<label class="field"><span>通知时刻</span><input type="text" data-ntfnew-field="notifiedTime" value="08:00" /><em class="field-msg" data-field-error="notifiedTime" hidden></em></label>'
+      + '<label class="field"><span>备注</span><input type="text" data-ntfnew-field="note" placeholder="可不填" /></label>'
+      + '<button type="button" class="btn btn-primary btn-sm" data-action="add-notification" data-id="' + esc(w.id) + '">登记通知对象</button>'
+      + '</div>'
+      + '<div class="form-error" data-role="notify-error" hidden></div>';
+
+    html += '<div class="detail-actions">'
+      + '<button type="button" class="btn btn-sm" data-action="delete-warning" data-id="' + esc(w.id) + '">删除这条预警</button>'
+      + '</div>'
+      + '</div></td></tr>';
+    return html;
+  }
+
+  async function submitWarning(form) {
+    var errorBox = el('warningFormError');
+    clearFormError(errorBox);
+    function val(name) {
+      var node = qs('[name="' + name + '"]', form);
+      return node ? node.value : '';
+    }
+    var basis = qsa('input[name="trigger.basis"]:checked', form).map(function (node) { return node.value; });
+    var trigger = { basis: basis, detail: val('trigger.detail') };
+    if (basis.indexOf('水位') >= 0) trigger.level = val('trigger.level');
+    if (basis.indexOf('入库流量') >= 0) trigger.inflow = val('trigger.inflow');
+    if (basis.indexOf('指令') >= 0) trigger.orderId = val('trigger.orderId');
+    try {
+      var created = await api('POST', '/api/warnings', {
+        reservoirId: val('reservoirId'),
+        level: val('level'),
+        issuedAt: val('issuedAt'),
+        issuedTime: val('issuedTime'),
+        issuer: val('issuer'),
+        remark: val('remark'),
+        trigger: trigger
+      });
+      toast('预警已发布：' + (created && created.code ? created.code : ''));
+      state.expanded.warning = created && created.id ? created.id : '';
+      await reloadView('warnings');
+    } catch (err) {
+      showError(err, errorBox);
+    }
+  }
+
   /* ================= 水量平衡 ================= */
 
   function resultItem(label, value, accent) {
@@ -1133,6 +1429,66 @@
       return;
     }
 
+    if (action === 'toggle-warning') {
+      state.expanded.warning = state.expanded.warning === btn.dataset.id ? '' : btn.dataset.id;
+      renderWarnings();
+      return;
+    }
+    if (action === 'jump-warning') {
+      state.filters.warnings = { reservoirId: '', level: '' };
+      state.expanded.warning = btn.dataset.id;
+      renderSidebar();
+      renderWarnings();
+      var targetRow = qs('[data-warning-row="' + btn.dataset.id + '"]');
+      if (targetRow) targetRow.scrollIntoView({ block: 'center' });
+      return;
+    }
+    if (action === 'delete-warning') {
+      if (!armDelete(btn)) return;
+      try {
+        await api('DELETE', '/api/warnings/' + encodeURIComponent(btn.dataset.id));
+        state.expanded.warning = '';
+        toast('预警已删除');
+        await reloadView('warnings');
+      } catch (err) { showError(err); }
+      return;
+    }
+    if (action === 'add-notification') {
+      var warnDetail = btn.closest('.detail');
+      var newBody = {};
+      qsa('[data-ntfnew-field]', warnDetail).forEach(function (node) {
+        newBody[node.dataset.ntfnewField] = node.value;
+      });
+      try {
+        await api('POST', '/api/warnings/' + encodeURIComponent(btn.dataset.id) + '/notifications', newBody);
+        toast('通知对象已登记');
+        await reloadView('warnings');
+      } catch (err) { showError(err, qs('[data-role="notify-error"]', warnDetail)); }
+      return;
+    }
+    if (action === 'save-receipt') {
+      var ntfRow = btn.closest('tr');
+      var receiptBody = {};
+      qsa('[data-ntf-field]', ntfRow).forEach(function (node) {
+        receiptBody[node.dataset.ntfField] = node.value;
+      });
+      try {
+        await api('PATCH', '/api/warnings/' + encodeURIComponent(btn.dataset.id) + '/notifications/' + encodeURIComponent(btn.dataset.nid), receiptBody);
+        toast('回执已登记');
+        await reloadView('warnings');
+      } catch (err) { showError(err, qs('[data-role="notify-error"]', btn.closest('.detail'))); }
+      return;
+    }
+    if (action === 'delete-notification') {
+      if (!armDelete(btn)) return;
+      try {
+        await api('DELETE', '/api/warnings/' + encodeURIComponent(btn.dataset.id) + '/notifications/' + encodeURIComponent(btn.dataset.nid));
+        toast('通知记录已删除');
+        await reloadView('warnings');
+      } catch (err) { showError(err); }
+      return;
+    }
+
     if (action === 'add-curve-point') {
       readCurveDraftFromDom();
       if (state.curveDraft && state.curveDraft.reservoirId === btn.dataset.reservoirId) {
@@ -1231,6 +1587,16 @@
     });
 
     document.addEventListener('change', function (event) {
+      var basisToggle = event.target.closest('[data-basis-toggle]');
+      if (basisToggle) {
+        var basisField = el(basisToggle.dataset.basisToggle);
+        if (basisField) {
+          if (basisToggle.checked) basisField.removeAttribute('hidden');
+          else basisField.setAttribute('hidden', '');
+        }
+        return;
+      }
+      if (event.target.id === 'warningFormReservoir') { fillWarningOrderSelect(); return; }
       var node = event.target.closest('[data-filter-key]');
       if (!node) return;
       var scope = node.dataset.filterScope;
@@ -1244,6 +1610,7 @@
       }
       if (scope === 'orders') { reloadView('orders'); return; }
       if (scope === 'water') { reloadView('water').then(updateWaterCounts); return; }
+      if (scope === 'warnings') { renderWarnings(); return; }
       if (scope === 'balance') { renderBalance(); }
     });
 
@@ -1268,6 +1635,7 @@
     el('inflowForm').addEventListener('submit', function (event) { event.preventDefault(); submitFlow(event.target, 'inflow'); });
     el('releaseForm').addEventListener('submit', function (event) { event.preventDefault(); submitFlow(event.target, 'release'); });
     el('orderForm').addEventListener('submit', function (event) { event.preventDefault(); submitOrder(event.target); });
+    el('warningForm').addEventListener('submit', function (event) { event.preventDefault(); submitWarning(event.target); });
     el('balanceForm').addEventListener('submit', function (event) { event.preventDefault(); submitBalance(event.target); });
   }
 
@@ -1275,7 +1643,7 @@
 
   function fillReservoirSelects() {
     var list = state.reservoirs || [];
-    ['levelFormReservoir', 'inflowFormReservoir', 'releaseFormReservoir', 'orderFormReservoir', 'balanceReservoir'].forEach(function (id) {
+    ['levelFormReservoir', 'inflowFormReservoir', 'releaseFormReservoir', 'orderFormReservoir', 'balanceReservoir', 'warningFormReservoir'].forEach(function (id) {
       var node = el(id);
       if (!node) return;
       var current = node.value;
@@ -1305,6 +1673,10 @@
     if (balanceFrom && !balanceFrom.value) balanceFrom.value = state.filters.balance.from;
     var balanceTo = el('balanceTo');
     if (balanceTo && !balanceTo.value) balanceTo.value = state.filters.balance.to;
+
+    var warningDate = el('warningFormDate');
+    if (warningDate && !warningDate.value) warningDate.value = todayIso();
+    fillWarningOrderSelect();
   }
 
   /* ================= 启动 ================= */
@@ -1330,6 +1702,7 @@
       state.flows.inflow = await api('GET', '/api/flows?kind=inflow');
       state.flows.release = await api('GET', '/api/flows?kind=release');
       state.orders = await api('GET', '/api/orders');
+      state.warnings = await api('GET', '/api/warnings');
     } catch (err) {
       showError(err);
     }
@@ -1341,6 +1714,7 @@
     renderReservoirs();
     renderWater();
     renderOrders();
+    renderWarnings();
     renderBalance();
   }
 

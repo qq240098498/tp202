@@ -1,6 +1,7 @@
 const store = require('./store');
 const water = require('./water');
 const records = require('./records');
+const warnings = require('./warnings');
 
 function overview(data) {
   const settings = data.settings;
@@ -44,7 +45,7 @@ function overview(data) {
     return reservoir ? water.levelCheck(reservoir, l.level, l.date, settings).exceeded : false;
   }).length;
 
-  return {
+  return Object.assign({
     today,
     reservoirCount: data.reservoirs.length,
     runningCount: data.reservoirs.filter((r) => r.status === '运行').length,
@@ -58,7 +59,7 @@ function overview(data) {
     lossPerDayWan: Number(settings.lossPerDayWan),
     toleranceWan: Number(settings.balanceToleranceWan),
     floodSeason: settings.floodSeasonStart + ' 至 ' + settings.floodSeasonEnd,
-  };
+  }, warnings.counts(data));
 }
 
 module.exports = { overview };

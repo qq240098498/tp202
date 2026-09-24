@@ -26,6 +26,7 @@
   <button type="button" class="tab" data-view="reservoirs">水库</button>
   <button type="button" class="tab" data-view="water">水位与流量</button>
   <button type="button" class="tab" data-view="orders">调度指令</button>
+  <button type="button" class="tab" data-view="warnings">泄洪预警</button>
   <button type="button" class="tab" data-view="balance">水量平衡</button>
 </nav>
 
@@ -402,6 +403,96 @@
           <tbody id="orderRows"></tbody>
         </table>
       </div>
+    </section>
+
+    <section class="view" data-view="warnings">
+      <div class="view-head">
+        <div>
+          <h2>泄洪预警</h2>
+          <p class="view-sub">预警按等级分组列出；「第几次」「与上一次的差别」「矛盾提示」「通知回执进度」全部直接显示 <code>GET /api/warnings</code> 返回的派生字段，前端不做二次判定。未回执、有异议与矛盾提示单独挂在顶部待办里。点一行在行内展开对比、登记通知对象与回执。</p>
+        </div>
+        <div class="view-actions">
+          <span class="pill" id="warningCount">共 0 条</span>
+          <button type="button" class="btn btn-ghost" data-action="reload" data-view="warnings">刷新</button>
+        </div>
+      </div>
+
+      <div class="card" id="warnTodoCard"></div>
+
+      <div class="card">
+        <h3>登记预警 <span class="card-sub">接口 <code>POST /api/warnings</code>；触发依据至少勾一项，勾了哪项填哪项</span></h3>
+        <form class="form-grid" id="warningForm" novalidate>
+          <label class="field">
+            <span>水库</span>
+            <select name="reservoirId" id="warningFormReservoir"></select>
+            <em class="field-msg" data-field-error="reservoirId" hidden></em>
+          </label>
+          <label class="field">
+            <span>预警等级</span>
+            <select name="level">
+              <option value="注意">注意</option>
+              <option value="警戒">警戒</option>
+              <option value="严重">严重</option>
+            </select>
+            <em class="field-msg" data-field-error="level" hidden></em>
+          </label>
+          <label class="field">
+            <span>下达日期</span>
+            <input type="date" name="issuedAt" id="warningFormDate" />
+            <em class="field-msg" data-field-error="issuedAt" hidden></em>
+          </label>
+          <label class="field">
+            <span>下达时刻</span>
+            <input type="text" name="issuedTime" value="08:00" placeholder="08:30" />
+            <em class="field-msg" data-field-error="issuedTime" hidden></em>
+          </label>
+          <label class="field">
+            <span>下达人</span>
+            <input type="text" name="issuer" placeholder="调度科 张三" />
+            <em class="field-msg" data-field-error="issuer" hidden></em>
+          </label>
+          <div class="field field-wide">
+            <span>触发依据（至少勾一项）</span>
+            <div class="basis-checks">
+              <label><input type="checkbox" name="trigger.basis" value="水位" data-basis-toggle="warningLevelField" /> 水位</label>
+              <label><input type="checkbox" name="trigger.basis" value="入库流量" data-basis-toggle="warningInflowField" /> 入库流量</label>
+              <label><input type="checkbox" name="trigger.basis" value="指令" data-basis-toggle="warningOrderField" /> 指令</label>
+            </div>
+            <em class="field-msg" data-field-error="trigger.basis" hidden></em>
+          </div>
+          <label class="field" id="warningLevelField" hidden>
+            <span>触发水位（m）</span>
+            <input type="number" step="0.01" name="trigger.level" placeholder="97.60" />
+            <em class="field-msg" data-field-error="trigger.level" hidden></em>
+          </label>
+          <label class="field" id="warningInflowField" hidden>
+            <span>触发入库流量（m³/s）</span>
+            <input type="number" step="0.01" name="trigger.inflow" placeholder="130" />
+            <em class="field-msg" data-field-error="trigger.inflow" hidden></em>
+          </label>
+          <label class="field" id="warningOrderField" hidden>
+            <span>关联调度指令</span>
+            <select name="trigger.orderId" id="warningOrderSelect"></select>
+            <em class="field-msg" data-field-error="trigger.orderId" hidden></em>
+          </label>
+          <label class="field field-wide">
+            <span>依据说明</span>
+            <input type="text" name="trigger.detail" placeholder="如：水位到警戒，且入库持续上涨" />
+            <em class="field-msg" data-field-error="trigger.detail" hidden></em>
+          </label>
+          <label class="field field-wide">
+            <span>备注</span>
+            <input type="text" name="remark" placeholder="可不填" />
+            <em class="field-msg" data-field-error="remark" hidden></em>
+          </label>
+          <div class="field-actions">
+            <button type="submit" class="btn btn-primary">发布预警</button>
+          </div>
+        </form>
+        <div class="form-error" id="warningFormError" hidden></div>
+      </div>
+
+      <div id="warningGroups"></div>
     </section>
 
     <section class="view" data-view="balance">
