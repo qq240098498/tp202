@@ -401,6 +401,32 @@ code {
 .caliber li { margin-bottom: 4px; }
 .caliber b { color: var(--ink); }
 
+/* ---------- 泄洪预警 ---------- */
+.nowrap { white-space: nowrap; }
+.text-danger { color: var(--orange); }
+.notice-input { width: 150px; font-family: inherit; font-size: 12px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 4px; background: #fff; }
+.warning-group h3 { display: flex; align-items: center; gap: 8px; }
+.warning-group .tag { font-size: 13px; padding: 1px 10px; }
+
+.detail-grid .item.is-danger .v { color: var(--orange); }
+.detail-grid .item.is-danger { background: var(--orange-soft); border-radius: 3px; padding: 1px 4px; }
+
+.conflict-box {
+  margin: 8px 0 4px;
+  padding: 8px 12px;
+  background: var(--orange-soft);
+  border: 1px solid #eec3b4;
+  border-left: 4px solid var(--orange);
+  border-radius: var(--radius);
+}
+.conflict-box h4 { margin: 0 0 4px; color: #8d3315; border-left-color: var(--orange); }
+.conflict-box ul { margin: 0; padding-left: 18px; font-size: 12px; color: #8d3315; }
+.conflict-box li { margin-bottom: 3px; }
+.conflict-box code { background: #f7d7cc; color: #8d3315; }
+
+.mini-table select { font-family: inherit; font-size: 12px; padding: 2px 4px; border: 1px solid var(--line); border-radius: 4px; background: #fff; max-width: 86px; }
+.notice-add .field.field-wide { grid-column: span 2; min-width: 240px; }
+
 /* ---------- 弹层 ---------- */
 .modal-mask {
   display: flex;

@@ -5,6 +5,7 @@ const reservoirs = require('./reservoirs');
 const records = require('./records');
 const water = require('./water');
 const summary = require('./summary');
+const warnings = require('./warnings');
 
 const router = express.Router();
 
@@ -59,6 +60,17 @@ router.patch('/orders/:id', withData((data, req) => ({ __save: true, __body: rec
 router.post('/orders/:id/copy', withData((data, req) => ({ __save: true, __body: records.copyOrder(data, req.params.id, req.body) })));
 router.post('/orders/:id/attachments', withData((data, req) => ({ __save: true, __body: records.addAttachment(data, req.params.id, req.body || {}) })));
 router.delete('/orders/:id', withData((data, req) => ({ __save: true, __body: records.removeOrder(data, req.params.id) })));
+
+// 泄洪预警
+router.get('/warnings', withData((data, req) => warnings.list(data, req.query)));
+router.get('/warnings/pending', withData((data, req) => warnings.pendingReceipts(data, req.query)));
+router.post('/warnings', withData((data, req) => ({ __save: true, __body: warnings.createWarning(data, req.body || {}) })));
+router.get('/warnings/:id', withData((data, req) => warnings.decorate(data, warnings.find(data, req.params.id))));
+router.patch('/warnings/:id', withData((data, req) => ({ __save: true, __body: warnings.updateWarning(data, req.params.id, req.body || {}) })));
+router.delete('/warnings/:id', withData((data, req) => ({ __save: true, __body: warnings.removeWarning(data, req.params.id) })));
+router.post('/warnings/:id/notices', withData((data, req) => ({ __save: true, __body: warnings.addNotice(data, req.params.id, req.body || {}) })));
+router.patch('/warnings/:id/notices/:nid', withData((data, req) => ({ __save: true, __body: warnings.updateNotice(data, req.params.id, req.params.nid, req.body || {}) })));
+router.delete('/warnings/:id/notices/:nid', withData((data, req) => ({ __save: true, __body: warnings.removeNotice(data, req.params.id, req.params.nid) })));
 
 router.get('/balance', withData((data, req) => {
   const { reservoirId, from, to } = req.query;

@@ -111,8 +111,9 @@ function update(data, id, payload) {
 function remove(data, id) {
   find(data, id);
   const used = data.levels.filter((l) => l.reservoirId === id).length + data.orders.filter((o) => o.reservoirId === id).length;
-  if (used > 0) {
-    throw new AppError(409, 'RESERVOIR_IN_USE', '这个水库名下还有 ' + used + ' 条水位或指令记录，不能删除', { count: used });
+  const warningCount = (data.warnings || []).filter((w) => w.reservoirId === id).length;
+  if (used > 0 || warningCount > 0) {
+    throw new AppError(409, 'RESERVOIR_IN_USE', '这个水库名下还有 ' + used + ' 条水位或指令记录、' + warningCount + ' 条预警，不能删除', { count: used + warningCount });
   }
   data.reservoirs = data.reservoirs.filter((r) => r.id !== id);
   data.curves = data.curves.filter((c) => c.reservoirId !== id);

@@ -25,7 +25,7 @@ app.listen(port, () => {
   let info = '';
   try {
     const data = store.load();
-    info = '水库 ' + data.reservoirs.length + ' 座、水位记录 ' + data.levels.length + ' 条、调度指令 ' + data.orders.length + ' 条';
+    info = '水库 ' + data.reservoirs.length + ' 座、水位记录 ' + data.levels.length + ' 条、调度指令 ' + data.orders.length + ' 条、泄洪预警 ' + (data.warnings || []).length + ' 条';
   } catch (err) {
     info = '数据文件还没准备好：' + err.message;
   }

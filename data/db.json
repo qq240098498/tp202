@@ -1819,5 +1819,186 @@
         }
       ]
     }
+  ],
+  "warnings": [
+    {
+      "id": "warn-0001",
+      "code": "YJ-0001",
+      "reservoirId": "res-0001",
+      "grade": "注意",
+      "basisLevel": 97.12,
+      "basisInflow": 125,
+      "basisOrderId": "",
+      "issuedAt": "2026-09-22 06:00",
+      "issuer": "调度科 赵值班",
+      "status": "已解除",
+      "remark": "上游降雨，水势趋涨",
+      "notices": [
+        {
+          "id": "ntf-0001",
+          "unit": "下游青江镇政府",
+          "contact": "张镇长",
+          "method": "电话",
+          "notifiedAt": "2026-09-22 06:10",
+          "receipt": "已收到",
+          "receiptAt": "2026-09-24 03:01",
+          "objection": "",
+          "note": ""
+        },
+        {
+          "id": "ntf-0002",
+          "unit": "青岭村村委会",
+          "contact": "刘主任",
+          "method": "短信",
+          "notifiedAt": "2026-09-22 06:12",
+          "receipt": "已收到",
+          "receiptAt": "2026-09-24 03:01",
+          "objection": "",
+          "note": ""
+        }
+      ],
+      "prevId": ""
+    },
+    {
+      "id": "warn-0002",
+      "code": "YJ-0002",
+      "reservoirId": "res-0001",
+      "grade": "警戒",
+      "basisLevel": 97.66,
+      "basisInflow": null,
+      "basisOrderId": "",
+      "issuedAt": "2026-09-22 20:30",
+      "issuer": "调度科 王值班",
+      "status": "已解除",
+      "remark": "夜间涨水加快",
+      "notices": [
+        {
+          "id": "ntf-0003",
+          "unit": "青岭村村委会",
+          "contact": "刘主任",
+          "method": "电话",
+          "notifiedAt": "2026-09-22 20:40",
+          "receipt": "有异议",
+          "receiptAt": "2026-09-24 03:01",
+          "objection": "转移路线与村道施工段冲突，要求改走东线",
+          "note": ""
+        }
+      ],
+      "prevId": ""
+    },
+    {
+      "id": "warn-0003",
+      "code": "YJ-0003",
+      "reservoirId": "res-0001",
+      "grade": "警戒",
+      "basisLevel": 97.71,
+      "basisInflow": 190,
+      "basisOrderId": "ord-0003",
+      "issuedAt": "2026-09-23 07:00",
+      "issuer": "调度科 李值班",
+      "status": "已解除",
+      "remark": "依据加报洪水预报与预泄指令 ZL-0003",
+      "notices": [
+        {
+          "id": "ntf-0004",
+          "unit": "下游青江镇政府",
+          "contact": "张镇长",
+          "method": "电话",
+          "notifiedAt": "2026-09-23 07:05",
+          "receipt": "已收到",
+          "receiptAt": "2026-09-24 03:01",
+          "objection": "",
+          "note": ""
+        }
+      ],
+      "prevId": "warn-0002"
+    },
+    {
+      "id": "warn-0004",
+      "code": "YJ-0004",
+      "reservoirId": "res-0001",
+      "grade": "严重",
+      "basisLevel": 97.42,
+      "basisInflow": 285,
+      "basisOrderId": "ord-0003",
+      "issuedAt": "2026-09-23 21:00",
+      "issuer": "防汛办 周指挥",
+      "status": "生效中",
+      "remark": "入库超严重门槛，开启泄洪洞，按 ZL-0003 执行",
+      "notices": [
+        {
+          "id": "ntf-0005",
+          "unit": "下游青江镇政府",
+          "contact": "张镇长",
+          "method": "电话",
+          "notifiedAt": "2026-09-23 21:08",
+          "receipt": "已收到",
+          "receiptAt": "2026-09-24 03:01",
+          "objection": "",
+          "note": ""
+        },
+        {
+          "id": "ntf-0006",
+          "unit": "青岭村村委会",
+          "contact": "刘主任",
+          "method": "广播",
+          "notifiedAt": "2026-09-23 21:10",
+          "receipt": "已收到",
+          "receiptAt": "2026-09-24 03:01",
+          "objection": "",
+          "note": ""
+        },
+        {
+          "id": "ntf-0007",
+          "unit": "库区游船公司",
+          "contact": "陈队长",
+          "method": "电话",
+          "notifiedAt": "2026-09-23 21:12",
+          "receipt": "未回",
+          "receiptAt": "",
+          "objection": "",
+          "note": ""
+        },
+        {
+          "id": "ntf-0008",
+          "unit": "下游围堰施工单位",
+          "contact": "孙工",
+          "method": "短信",
+          "notifiedAt": "2026-09-23 21:15",
+          "receipt": "已收到",
+          "receiptAt": "2026-09-24 21:35",
+          "objection": "",
+          "note": ""
+        }
+      ],
+      "prevId": ""
+    },
+    {
+      "id": "warn-0005",
+      "code": "YJ-0005",
+      "reservoirId": "res-0002",
+      "grade": "注意",
+      "basisLevel": 93.12,
+      "basisInflow": 130,
+      "basisOrderId": "",
+      "issuedAt": "2026-09-23 12:00",
+      "issuer": "调度科 王值班",
+      "status": "生效中",
+      "remark": "白河流域小到中雨",
+      "notices": [
+        {
+          "id": "ntf-0009",
+          "unit": "白河镇政府",
+          "contact": "吴镇长",
+          "method": "传真",
+          "notifiedAt": "2026-09-23 12:20",
+          "receipt": "已收到",
+          "receiptAt": "2026-09-24 21:35",
+          "objection": "",
+          "note": ""
+        }
+      ],
+      "prevId": ""
+    }
   ]
 }

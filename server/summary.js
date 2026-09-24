@@ -44,6 +44,21 @@ function overview(data) {
     return reservoir ? water.levelCheck(reservoir, l.level, l.date, settings).exceeded : false;
   }).length;
 
+  // 泄洪预警台账计数：未回执只统计「生效中」预警下的，已解除的不再挂提醒
+  const allWarnings = data.warnings || [];
+  const warningCount = allWarnings.length;
+  const activeWarningCount = allWarnings.filter((w) => w.status === '生效中').length;
+  const pendingReceiptCount = allWarnings
+    .filter((w) => w.status === '生效中')
+    .reduce((s, w) => s + (w.notices || []).filter((n) => n.receipt === '未回').length, 0);
+  const objectionCount = allWarnings
+    .filter((w) => w.status === '生效中')
+    .reduce((s, w) => s + (w.notices || []).filter((n) => n.receipt === '有异议').length, 0);
+  const warningGradeCount = {};
+  for (const g of ['注意', '警戒', '严重']) {
+    warningGradeCount[g] = allWarnings.filter((w) => w.status === '生效中' && w.grade === g).length;
+  }
+
   return {
     today,
     reservoirCount: data.reservoirs.length,
@@ -55,6 +70,11 @@ function overview(data) {
     orderStatusCount,
     activeOrders: orders.filter((o) => o.status === '已下达' || o.status === '执行中').length,
     orderDeviationCount: orders.filter((o) => o.deviation !== null && Math.abs(o.deviation) > 5).length,
+    warningCount,
+    activeWarningCount,
+    pendingReceiptCount,
+    objectionCount,
+    warningGradeCount,
     lossPerDayWan: Number(settings.lossPerDayWan),
     toleranceWan: Number(settings.balanceToleranceWan),
     floodSeason: settings.floodSeasonStart + ' 至 ' + settings.floodSeasonEnd,

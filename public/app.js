@@ -6,9 +6,11 @@
 
   /* ================= 常量与工具 ================= */
 
-  var VIEW_IDS = ['overview', 'reservoirs', 'water', 'orders', 'balance'];
+  var VIEW_IDS = ['overview', 'reservoirs', 'water', 'orders', 'warnings', 'balance'];
   var ORDER_STATUSES = ['已下达', '执行中', '已完成', '已撤销'];
   var RESERVOIR_STATUSES = ['运行', '检修'];
+  var WARNING_GRADES = ['严重', '警戒', '注意'];
+  var WARNING_RECEIPTS = ['已收到', '有异议', '未回'];
 
   function el(id) { return document.getElementById(id); }
   function qs(sel, root) { return (root || document).querySelector(sel); }
@@ -44,6 +46,19 @@
   function todayIso() {
     var d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function nowLocalInput() {
+    var d = new Date();
+    return todayIso() + 'T' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+
+  // datetime-local 的值（YYYY-MM-DDTHH:mm）转成接口口径（YYYY-MM-DD HH:mm）
+  function dtToApi(value) {
+    return String(value || '').replace('T', ' ').trim();
+  }
+  function dtToInput(value) {
+    return String(value || '').replace(' ', 'T');
   }
 
   function queryString(params) {
@@ -127,8 +142,10 @@
     levels: [],
     flows: { inflow: [], release: [] },
     orders: [],
+    warnings: [],
+    pendingReceipts: [],
     balance: null,
-    expanded: { reservoir: '', level: '', flow: '', order: '' },
+    expanded: { reservoir: '', level: '', flow: '', order: '', warning: '' },
     reservoirDetail: null,
     curveDraft: null,
     curveQuery: { reservoirId: '', byLevel: null, byCapacity: null },
@@ -137,6 +154,7 @@
       reservoirs: { basin: '', status: '', keyword: '' },
       water: { reservoirId: '', from: '', to: '' },
       orders: { reservoirId: '', status: '' },
+      warnings: { reservoirId: '', grade: '', status: '' },
       balance: { reservoirId: '', from: '2026-05-01', to: '2026-05-10' }
     }
   };
@@ -243,6 +261,8 @@
       } else if (view === 'orders') {
         state.orders = await api('GET', '/api/orders' + ordersQuery());
         renderOrders();
+      } else if (view === 'warnings') {
+        await loadWarnings();
       } else if (view === 'balance') {
         renderBalance();
       }
@@ -360,6 +380,21 @@
       html.push('<li>实际均值与偏差取接口</li>');
       html.push('<li>删除一律两步确认</li>');
       html.push('</ul></div>');
+    } else if (view === 'warnings') {
+      var pending = (state.pendingReceipts || []).length;
+      html.push('<div class="side-block">');
+      html.push('<h3>筛选预警</h3>');
+      html.push('<label class="field"><span>水库</span><select data-filter-key="reservoirId" data-filter-scope="warnings">' + reservoirOptions(f.reservoirId) + '</select></label>');
+      html.push('<label class="field"><span>等级</span><select data-filter-key="grade" data-filter-scope="warnings">' + stringOptions(['注意', '警戒', '严重'], f.grade, '全部等级') + '</select></label>');
+      html.push('<label class="field"><span>状态</span><select data-filter-key="status" data-filter-scope="warnings">' + stringOptions(['生效中', '已解除'], f.status, '全部状态') + '</select></label>');
+      html.push('<button type="button" class="btn btn-ghost btn-sm" data-action="reset-filter" data-scope="warnings">重置筛选</button>');
+      html.push('</div>');
+      html.push('<div class="side-block"><h3>闭环口径</h3><ul class="side-list">');
+      html.push('<li>预警按「水库 × 等级」登记</li>');
+      html.push('<li>触发依据：水位 / 入库流量 / 指令</li>');
+      html.push('<li>同等级再发布标出次数与差别</li>');
+      html.push('<li>未回执：' + (pending ? '<b style="color:var(--orange)">' + pending + ' 条挂起</b>' : '0 条') + '</li>');
+      html.push('</ul></div>');
     } else if (view === 'balance') {
       html.push('<div class="side-block">');
       html.push('<h3>水量平衡口径</h3><ul class="side-list">');
@@ -416,6 +451,9 @@
         metricCard('指令数', s.orderCount, '点卡去「调度指令」', 'orders', ''),
         metricCard('执行中加已下达', active, '执行中与已下达合计', 'orders', ''),
         metricCard('偏差超限指令数', s.orderDeviationCount, '偏差绝对值大于 5 的指令', 'orders', '', true),
+        metricCard('生效中预警', s.activeWarningCount, '点卡去「泄洪预警」按等级核对', 'warnings', 'status=生效中', s.activeWarningCount > 0),
+        metricCard('通知未回执', s.pendingReceiptCount, '生效中预警里还没回执的通知', 'warnings', 'status=生效中', s.pendingReceiptCount > 0),
+        metricCard('预警有异议', s.objectionCount, '回执为有异议、待处理的通知', 'warnings', 'status=生效中', s.objectionCount > 0),
         metricCard('每天损失', s.lossPerDayWan, '单位 万m³，可去设置里改', 'balance', ''),
         metricCard('容差', s.toleranceWan, '单位 万m³，可去设置里改', 'balance', '')
       ].join('');
@@ -785,6 +823,281 @@
     tbody.innerHTML = html.join('');
   }
 
+  /* ================= 泄洪预警 ================= */
+
+  function warningStatusTag(status) {
+    return status === '生效中'
+      ? '<span class="tag is-over">生效中</span>'
+      : '<span class="tag is-ok">已解除</span>';
+  }
+
+  function receiptTag(receipt) {
+    if (receipt === '已收到') return '<span class="tag is-ok">已收到</span>';
+    if (receipt === '有异议') return '<span class="tag is-serious">有异议</span>';
+    return '<span class="tag is-warn">未回</span>';
+  }
+
+  async function loadWarnings() {
+    var f = state.filters.warnings;
+    var q = queryString({ reservoirId: f.reservoirId, grade: f.grade, status: f.status });
+    state.warnings = await api('GET', '/api/warnings' + q);
+    state.pendingReceipts = await api('GET', '/api/warnings/pending' + queryString({ reservoirId: f.reservoirId }));
+    renderWarnings();
+  }
+
+  function basisShort(w) {
+    var parts = [];
+    if (w.basisLevel !== null && w.basisLevel !== undefined) parts.push('水位 ' + numText(w.basisLevel) + 'm');
+    if (w.basisInflow !== null && w.basisInflow !== undefined) parts.push('入库 ' + numText(w.basisInflow) + ' m³/s');
+    if (w.basisOrderId) parts.push('指令 ' + esc(dash(w.basisOrderCode)));
+    return parts.length ? parts.join('，') : '（无依据）';
+  }
+
+  function renderWarnings() {
+    renderPendingReceipts();
+    renderWarningGroups();
+    el('warningCount').textContent = '共 ' + (state.warnings || []).length + ' 条';
+  }
+
+  function renderPendingReceipts() {
+    var tbody = el('pendingRows');
+    var rows = state.pendingReceipts || [];
+    var card = el('pendingCard');
+    if (!rows.length) {
+      card.style.display = 'none';
+      tbody.innerHTML = '';
+      return;
+    }
+    card.style.display = '';
+    tbody.innerHTML = rows.map(function (p) {
+      return '<tr class="pending-row">'
+        + '<td>' + esc(p.warningCode) + '</td>'
+        + '<td>' + warningTag(p.grade) + '</td>'
+        + '<td>' + esc(p.reservoirName) + '</td>'
+        + '<td><b>' + esc(p.unit) + '</b></td>'
+        + '<td>' + esc(p.contact) + '</td>'
+        + '<td>' + esc(p.method) + '</td>'
+        + '<td>' + esc(p.notifiedAt) + '</td>'
+        + '<td>' + esc(p.warningIssuedAt) + '</td>'
+        + '<td class="nowrap">'
+        + '<button type="button" class="btn btn-sm btn-primary" data-action="quick-receipt" data-wid="' + esc(p.warningId) + '" data-nid="' + esc(p.id) + '" data-receipt="已收到">登记收到</button> '
+        + '<button type="button" class="btn btn-sm" data-action="open-warning" data-wid="' + esc(p.warningId) + '">展开登记异议</button>'
+        + '</td></tr>';
+    }).join('');
+  }
+
+  function renderWarningGroups() {
+    var box = el('warningGroups');
+    var all = state.warnings || [];
+    var html = WARNING_GRADES.map(function (grade) {
+      var rows = all.filter(function (w) { return w.grade === grade; });
+      var body = rows.length
+        ? rows.map(warningRowHtml).join('')
+        : '<tr class="detail-row"><td colspan="9"><p class="empty">没有「' + grade + '」等级的预警。</p></td></tr>';
+      return '<div class="card warning-group" data-grade="' + grade + '">'
+        + '<h3>' + warningTag(grade) + ' 等级预警 <span class="card-sub">共 ' + rows.length + ' 条，按下达时刻倒序；同一水库同等级的第几次发布与差异在行内展开查看</span></h3>'
+        + '<div class="table-wrap" style="max-height:none;">'
+        + '<table class="table"><thead><tr>'
+        + '<th>编号</th><th>水库</th><th>下达时刻</th><th>下达人</th>'
+        + '<th>触发依据</th><th>状态</th><th>通知闭环</th><th>第几次发布</th><th>核对</th>'
+        + '</tr></thead><tbody>' + body + '</tbody></table>'
+        + '</div></div>';
+    }).join('');
+    box.innerHTML = html;
+  }
+
+  function warningRowHtml(w) {
+    var expanded = state.expanded.warning === w.id;
+    var html = '<tr class="warning-row' + (expanded ? ' is-expanded' : '') + '" data-action="toggle-warning" data-id="' + esc(w.id) + '">'
+      + '<td>' + esc(w.code) + '</td>'
+      + '<td>' + esc(dash(w.reservoirName)) + '</td>'
+      + '<td>' + esc(dash(w.issuedAt)) + '</td>'
+      + '<td>' + esc(dash(w.issuer)) + '</td>'
+      + '<td>' + esc(basisShort(w)) + '</td>'
+      + '<td>' + warningStatusTag(w.status) + '</td>'
+      + '<td class="nowrap">共 ' + w.noticeCount + ' · 收到 ' + w.receivedCount
+      + (w.objectionCount ? ' · <b class="text-danger">异议 ' + w.objectionCount + '</b>' : ' · 异议 0')
+      + (w.pendingCount ? ' · <b class="text-danger">未回 ' + w.pendingCount + '</b>' : ' · 未回 0')
+      + '</td>'
+      + '<td>第 ' + w.sequence + ' / ' + w.sequenceTotal + ' 次' + (w.sequence > 1 ? '（前次 ' + esc(w.prevCode) + '）' : '（首次）') + '</td>'
+      + '<td>' + (w.contradictions.length
+        ? '<span class="tag is-serious">矛盾 ' + w.contradictions.length + '</span>'
+        : (w.sequence > 1 ? '<span class="tag is-ok">已核对</span>' : '<span class="tag">—</span>'))
+      + '</td></tr>';
+    if (expanded) html += warningDetailHtml(w);
+    return html;
+  }
+
+  function diffItem(label, value, danger) {
+    return '<div class="item' + (danger ? ' is-danger' : '') + '"><span class="k">' + esc(label) + '</span><span class="v">' + value + '</span></div>';
+  }
+
+  function signedNum(n, unit) {
+    if (n === null || n === undefined) return '—';
+    var v = Number(n);
+    return (v > 0 ? '+' : '') + v + (unit || '');
+  }
+
+  function warningDetailHtml(w) {
+    var d = w.diff;
+    var items = [
+      ['预警编号', w.code],
+      ['水库', w.reservoirName],
+      ['等级', w.grade],
+      ['发布次序', '第 ' + w.sequence + ' 次（同库同等级共 ' + w.sequenceTotal + ' 次）'],
+      ['下达时刻', w.issuedAt],
+      ['下达人', w.issuer],
+      ['依据·水位', w.basisLevel === null ? '未采用' : numText(w.basisLevel) + 'm（该等级门槛 ' + numText(w.levelThreshold) + 'm）'],
+      ['依据·入库流量', w.basisInflow === null ? '未采用' : numText(w.basisInflow) + ' m³/s（门槛 ' + numText(w.inflowThreshold) + '）'],
+      ['依据·指令', w.basisOrderId ? w.basisOrderCode + '（目标下泄 ' + numText(w.basisOrderTargetFlow) + ' m³/s）' : '未挂指令'],
+      ['状态', w.status],
+      ['备注', w.remark || '']
+    ];
+
+    var diffBlock;
+    if (!d) {
+      diffBlock = '<h4>与前一次发布的差别</h4><p class="empty">这是本库「' + w.grade + '」等级的首次发布，没有前一次可对比。</p>';
+    } else {
+      var kindText = function (arr) { return arr.length ? arr.join('、') : '无'; };
+      diffBlock = '<h4>与前一次发布的差别 <span class="card-sub">前次 ' + esc(d.prevCode) + '，' + esc(d.prevIssuedAt) + (d.prevStillActive ? '，前次仍为生效中' : '，前次已解除') + '</span></h4>'
+        + '<div class="detail-grid">'
+        + diffItem('触发依据项', '本次 ' + w.basisKinds.join('、') + ' ｜ 前次 ' + kindText(d.prevKinds), d.kindsChanged)
+        + diffItem('新增依据', kindText(d.addedKinds), d.addedKinds.length > 0)
+        + diffItem('撤掉依据', kindText(d.removedKinds), d.removedKinds.length > 0)
+        + diffItem('水位差（本次−前次）', signedNum(d.levelDelta, 'm'), d.levelDelta !== null && d.levelDelta <= -0.5)
+        + diffItem('入库流量差', signedNum(d.inflowDelta, ' m³/s'), false)
+        + diffItem('依据指令', d.orderChanged ? ('由 ' + esc(d.orderFromCode || '空') + ' 换为 ' + esc(d.orderToCode || '空')) : '未变化', d.orderChanged)
+        + diffItem('下达时刻次序', d.timeReversed ? '本次不晚于前次（次序异常）' : '晚于前次，次序正常', d.timeReversed)
+        + diffItem('前次异议数', d.prevObjections + ' 条', d.prevObjections > 0)
+        + '</div>';
+    }
+
+    var contradictionBlock = w.contradictions.length
+      ? '<div class="conflict-box"><h4>矛盾与不符（' + w.contradictions.length + ' 项，发布前请核对）</h4><ul>'
+        + w.contradictions.map(function (c) { return '<li><code>' + esc(c.code) + '</code> ' + esc(c.message) + '</li>'; }).join('')
+        + '</ul></div>'
+      : '<p class="side-note">依据数值、发布次序、等级并存均核对通过，无矛盾。</p>';
+
+    var notices = (w.notices || []).map(function (n) {
+      var receiptOptions = WARNING_RECEIPTS.map(function (r) {
+        return '<option value="' + r + '"' + (r === n.receipt ? ' selected' : '') + '>' + r + '</option>';
+      }).join('');
+      return '<tr data-notice-id="' + esc(n.id) + '">'
+        + '<td>' + esc(n.unit) + '</td>'
+        + '<td>' + esc(n.contact) + '</td>'
+        + '<td>' + esc(n.method) + '</td>'
+        + '<td>' + esc(n.notifiedAt) + '</td>'
+        + '<td>' + receiptTag(n.receipt) + '</td>'
+        + '<td>' + esc(dash(n.receiptAt)) + '</td>'
+        + '<td>' + esc(n.objection || '') + '</td>'
+        + '<td class="nowrap">'
+        + '<select data-notice-field="receipt">' + receiptOptions + '</select> '
+        + '<input type="text" data-notice-field="objection" value="' + esc(n.objection || '') + '" placeholder="异议说明" class="notice-input" /> '
+        + '<button type="button" class="btn btn-sm" data-action="set-receipt" data-id="' + esc(w.id) + '" data-nid="' + esc(n.id) + '">更新回执</button>'
+        + '</td></tr>';
+    }).join('');
+
+    var methodOptions = ['电话', '短信', '传真', '书面', '广播', '上门', '其他'].map(function (m) {
+      return '<option value="' + m + '">' + m + '</option>';
+    }).join('');
+    var receiptOptions = WARNING_RECEIPTS.map(function (r, i) {
+      return '<option value="' + r + '"' + (i === 2 ? ' selected' : '') + '>' + r + '</option>';
+    }).join('');
+
+    var statusBtn = w.status === '生效中'
+      ? '<button type="button" class="btn btn-sm" data-action="resolve-warning" data-id="' + esc(w.id) + '">标记已解除</button>'
+      : '<button type="button" class="btn btn-sm" data-action="reopen-warning" data-id="' + esc(w.id) + '">恢复生效</button>';
+
+    return '<tr class="detail-row" data-detail-for="' + esc(w.id) + '"><td colspan="9"><div class="detail" data-warning-id="' + esc(w.id) + '">'
+      + '<h4>预警登记信息</h4>'
+      + '<div class="detail-grid">' + items.map(itemHtml).join('') + '</div>'
+      + contradictionBlock
+      + diffBlock
+      + '<h4>通知与回执 <span class="card-sub">共 ' + w.noticeCount + ' 条：已收到 ' + w.receivedCount + '、有异议 ' + w.objectionCount + '、未回 ' + w.pendingCount + '</span></h4>'
+      + (notices ? '<table class="mini-table"><thead><tr><th>单位</th><th>联系人</th><th>方式</th><th>通知时刻</th><th>回执</th><th>回执时刻</th><th>异议说明</th><th>更新</th></tr></thead><tbody>' + notices + '</tbody></table>' : '<p class="empty">还没有通知记录。</p>')
+      + '<div class="inline-form notice-add">'
+      + '<label class="field"><span>通知单位</span><input type="text" data-notice-add="unit" placeholder="下游镇政府" /></label>'
+      + '<label class="field"><span>联系人</span><input type="text" data-notice-add="contact" placeholder="值班领导" /></label>'
+      + '<label class="field"><span>方式</span><select data-notice-add="method">' + methodOptions + '</select></label>'
+      + '<label class="field"><span>通知时刻</span><input type="datetime-local" data-notice-add="notifiedAt" value="' + nowLocalInput() + '" /></label>'
+      + '<label class="field"><span>回执</span><select data-notice-add="receipt">' + receiptOptions + '</select></label>'
+      + '<label class="field field-wide"><span>异议/备注</span><input type="text" data-notice-add="note" placeholder="有异议时写明内容，否则可不填" /></label>'
+      + '<button type="button" class="btn btn-primary btn-sm" data-action="add-notice" data-id="' + esc(w.id) + '">登记通知</button>'
+      + '</div>'
+      + '<div class="form-error" data-role="warning-error" hidden></div>'
+      + '<div class="detail-actions">'
+      + statusBtn
+      + (w.noticeCount === 0 ? '<button type="button" class="btn btn-sm btn-danger" data-action="delete-warning" data-id="' + esc(w.id) + '">删除这条预警</button>' : '<span class="side-note">已有通知记录的预警不能删除，只能解除</span>')
+      + '</div>'
+      + '</div></td></tr>';
+  }
+
+  async function submitWarning(form) {
+    var errorBox = el('warningFormError');
+    clearFormError(errorBox);
+    var values = formValues(form);
+    var body = {
+      reservoirId: values.reservoirId,
+      grade: values.grade,
+      issuedAt: dtToApi(values.issuedAt),
+      issuer: values.issuer,
+      basisLevel: values.basisLevel === '' ? null : Number(values.basisLevel),
+      basisInflow: values.basisInflow === '' ? null : Number(values.basisInflow),
+      basisOrderId: values.basisOrderId || '',
+      remark: values.remark
+    };
+    try {
+      var created = await api('POST', '/api/warnings', body);
+      toast('预警 ' + created.code + ' 已发布' + (created.contradictions.length ? '，但有 ' + created.contradictions.length + ' 项矛盾提示，请展开核对' : ''));
+      form.querySelector('[name="remark"]').value = '';
+      await loadWarnings();
+      state.expanded.warning = created.id;
+      renderWarnings();
+    } catch (err) {
+      showError(err, errorBox);
+    }
+  }
+
+  async function addNotice(wid, box) {
+    var get = function (name) { var n = qs('[data-notice-add="' + name + '"]', box); return n ? n.value : ''; };
+    var body = {
+      unit: get('unit'),
+      contact: get('contact'),
+      method: get('method'),
+      notifiedAt: dtToApi(get('notifiedAt')),
+      receipt: get('receipt'),
+      note: get('note'),
+      objection: get('note')
+    };
+    try {
+      await api('POST', '/api/warnings/' + encodeURIComponent(wid) + '/notices', body);
+      toast('通知已登记');
+      await loadWarnings();
+    } catch (err) { showError(err, qs('[data-role="warning-error"]', box)); }
+  }
+
+  async function setReceipt(wid, nid, row) {
+    var receipt = qs('[data-notice-field="receipt"]', row).value;
+    var objection = qs('[data-notice-field="objection"]', row).value;
+    try {
+      await api('PATCH', '/api/warnings/' + encodeURIComponent(wid) + '/notices/' + encodeURIComponent(nid), { receipt: receipt, objection: objection });
+      toast('回执已更新为「' + receipt + '」');
+      await loadWarnings();
+    } catch (err) { showError(err); }
+  }
+
+  function fillWarningOrderSelect() {
+    var sel = el('warningFormOrder');
+    if (!sel) return;
+    var rid = el('warningFormReservoir').value;
+    var current = sel.value;
+    var orders = (state.orders || []).filter(function (o) { return !rid || o.reservoirId === rid; });
+    sel.innerHTML = '<option value="">不挂指令</option>' + orders.map(function (o) {
+      return '<option value="' + esc(o.id) + '">' + esc(o.code + '（' + o.issuedAt + '，目标 ' + o.targetFlow + ' m³/s，' + o.status + '）') + '</option>';
+    }).join('');
+    if (current && orders.some(function (o) { return o.id === current; })) sel.value = current;
+  }
+
   /* ================= 水量平衡 ================= */
 
   function resultItem(label, value, accent) {
@@ -1063,6 +1376,52 @@
     if (action === 'toggle-flow') { toggleRow('flow', btn.dataset.kind + ':' + btn.dataset.id); renderWater(); return; }
     if (action === 'toggle-order') { toggleRow('order', btn.dataset.id); renderOrders(); return; }
 
+    if (action === 'toggle-warning') {
+      state.expanded.warning = state.expanded.warning === btn.dataset.id ? '' : btn.dataset.id;
+      renderWarnings();
+      return;
+    }
+    if (action === 'open-warning') {
+      state.expanded.warning = btn.dataset.wid;
+      renderWarnings();
+      return;
+    }
+    if (action === 'add-notice') {
+      await addNotice(btn.dataset.id, btn.closest('.detail'));
+      return;
+    }
+    if (action === 'set-receipt') {
+      await setReceipt(btn.dataset.id, btn.dataset.nid, btn.closest('tr'));
+      return;
+    }
+    if (action === 'quick-receipt') {
+      try {
+        await api('PATCH', '/api/warnings/' + encodeURIComponent(btn.dataset.wid) + '/notices/' + encodeURIComponent(btn.dataset.nid), { receipt: btn.dataset.receipt });
+        toast('已登记为「' + btn.dataset.receipt + '」');
+        await loadWarnings();
+      } catch (err) { showError(err); }
+      return;
+    }
+    if (action === 'resolve-warning' || action === 'reopen-warning') {
+      var status = action === 'resolve-warning' ? '已解除' : '生效中';
+      try {
+        await api('PATCH', '/api/warnings/' + encodeURIComponent(btn.dataset.id), { status: status });
+        toast('预警已标记为「' + status + '」');
+        await loadWarnings();
+      } catch (err) { showError(err); }
+      return;
+    }
+    if (action === 'delete-warning') {
+      if (!armDelete(btn)) return;
+      try {
+        await api('DELETE', '/api/warnings/' + encodeURIComponent(btn.dataset.id));
+        state.expanded.warning = '';
+        toast('预警已删除');
+        await loadWarnings();
+      } catch (err) { showError(err); }
+      return;
+    }
+
     if (action === 'delete-level') {
       if (!armDelete(btn)) return;
       try {
@@ -1243,6 +1602,7 @@
         return;
       }
       if (scope === 'orders') { reloadView('orders'); return; }
+      if (scope === 'warnings') { reloadView('warnings'); return; }
       if (scope === 'water') { reloadView('water').then(updateWaterCounts); return; }
       if (scope === 'balance') { renderBalance(); }
     });
@@ -1268,6 +1628,8 @@
     el('inflowForm').addEventListener('submit', function (event) { event.preventDefault(); submitFlow(event.target, 'inflow'); });
     el('releaseForm').addEventListener('submit', function (event) { event.preventDefault(); submitFlow(event.target, 'release'); });
     el('orderForm').addEventListener('submit', function (event) { event.preventDefault(); submitOrder(event.target); });
+    el('warningForm').addEventListener('submit', function (event) { event.preventDefault(); submitWarning(event.target); });
+    el('warningFormReservoir').addEventListener('change', fillWarningOrderSelect);
     el('balanceForm').addEventListener('submit', function (event) { event.preventDefault(); submitBalance(event.target); });
   }
 
@@ -1275,7 +1637,7 @@
 
   function fillReservoirSelects() {
     var list = state.reservoirs || [];
-    ['levelFormReservoir', 'inflowFormReservoir', 'releaseFormReservoir', 'orderFormReservoir', 'balanceReservoir'].forEach(function (id) {
+    ['levelFormReservoir', 'inflowFormReservoir', 'releaseFormReservoir', 'orderFormReservoir', 'warningFormReservoir', 'balanceReservoir'].forEach(function (id) {
       var node = el(id);
       if (!node) return;
       var current = node.value;
@@ -1300,6 +1662,10 @@
       var end = qs('[name="windowEnd"]', orderForm);
       if (end && !end.value) end.value = todayIso();
     }
+
+    var warningIssuedAt = el('warningFormIssuedAt');
+    if (warningIssuedAt && !warningIssuedAt.value) warningIssuedAt.value = nowLocalInput();
+    fillWarningOrderSelect();
 
     var balanceFrom = el('balanceFrom');
     if (balanceFrom && !balanceFrom.value) balanceFrom.value = state.filters.balance.from;
@@ -1330,6 +1696,8 @@
       state.flows.inflow = await api('GET', '/api/flows?kind=inflow');
       state.flows.release = await api('GET', '/api/flows?kind=release');
       state.orders = await api('GET', '/api/orders');
+      state.warnings = await api('GET', '/api/warnings');
+      state.pendingReceipts = await api('GET', '/api/warnings/pending');
     } catch (err) {
       showError(err);
     }
@@ -1341,6 +1709,7 @@
     renderReservoirs();
     renderWater();
     renderOrders();
+    renderWarnings();
     renderBalance();
   }
 
